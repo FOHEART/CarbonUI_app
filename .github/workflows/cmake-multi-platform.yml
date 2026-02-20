@@ -219,6 +219,18 @@ jobs:
         echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
         test -f "${Qt5_DIR}/Qt5Config.cmake"
 
+    - name: Allow git clone using token (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        git config --global url."https://${{ secrets.XSTYPES_PAT }}@github.com/".insteadOf "https://github.com/"
+
+    - name: Allow git clone using token (Windows)
+      if: matrix.os == 'windows-latest'
+      shell: pwsh
+      run: |
+        git config --global url."https://${{ secrets.XSTYPES_PAT }}@github.com/".insteadOf "https://github.com/"
+
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
       # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
