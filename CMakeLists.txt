@@ -7,9 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(cmake/qt.cmake)
 
-# Find Qt using CONFIG package mode. Prefer Qt6 then Qt5 and require the Core/Gui/Widgets components.
-find_package(QT NAMES Qt6 Qt5 CONFIG REQUIRED COMPONENTS Core Gui Widgets)
-find_package(Qt${QT_VERSION_MAJOR} CONFIG REQUIRED COMPONENTS Core Gui Widgets)
+# Only use Qt5 (CONFIG mode) and require Core/Gui/Widgets
+find_package(Qt5 CONFIG REQUIRED COMPONENTS Core Gui Widgets)
+set(QT_VERSION_MAJOR 5)
 
 qt_standard_project_setup()
 
@@ -36,9 +36,9 @@ set_target_properties(${PROJECT_NAME}    PROPERTIES        WIN32_EXECUTABLE TRUE
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
-        Qt::Core
-        Qt::Gui
-        Qt::Widgets
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Gui
+        Qt${QT_VERSION_MAJOR}::Widgets
 )
 
 # Ensure source files are interpreted as UTF-8 by the compiler
