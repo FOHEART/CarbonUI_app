@@ -4,10 +4,24 @@ project(CarbonUI_app LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
 include(cmake/qt.cmake)
 
-# Only use Qt5 (CONFIG mode) and require Core/Gui/Widgets
+# --- Qt5 discovery (cross-platform) ---
+# Support common environment variables used by local installs and CI actions.
+# - Qt5_DIR: path containing Qt5Config.cmake
+# - QT_DIR / QTDIR: Qt prefix (will be appended to CMAKE_PREFIX_PATH)
+if (NOT DEFINED Qt5_DIR)
+    if (DEFINED ENV{Qt5_DIR})
+        set(Qt5_DIR "$ENV{Qt5_DIR}")
+    endif()
+endif()
+
+foreach(_qt_prefix_var QT_DIR QTDIR)
+    if (DEFINED ENV{${_qt_prefix_var}})
+        list(PREPEND CMAKE_PREFIX_PATH "$ENV{${_qt_prefix_var}}")
+    endif()
+endforeach()
+
 find_package(Qt5 CONFIG REQUIRED COMPONENTS Core Gui Widgets)
 set(QT_VERSION_MAJOR 5)
 
