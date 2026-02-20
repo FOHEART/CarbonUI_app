@@ -43,7 +43,10 @@ set(PROJECT_HEADERS
     MainWindow.h
 )
 
-qt_add_resources(RESOURCES_RCC Resource.qrc)
+set(RESOURCES_RCC
+    Resource.qrc
+)
+
 qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS} ${PROJECT_UI} ${RESOURCES_RCC})
 
 set_target_properties(${PROJECT_NAME}    PROPERTIES        WIN32_EXECUTABLE TRUE)
