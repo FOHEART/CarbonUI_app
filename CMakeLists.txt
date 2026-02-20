@@ -6,16 +6,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
 include(cmake/qt.cmake)
+
+# Find Qt using CONFIG package mode. Prefer Qt6 then Qt5 and require the Core/Gui/Widgets components.
+find_package(QT NAMES Qt6 Qt5 CONFIG REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt${QT_VERSION_MAJOR} CONFIG REQUIRED COMPONENTS Core Gui Widgets)
+
 qt_standard_project_setup()
-
-find_package(QT NAMES  Qt5 REQUIRED COMPONENTS Core)
-find_package(Qt${QT_VERSION_MAJOR}
-    COMPONENTS
-        Core
-        Gui
-        Widgets
-)
-
 
 
 set(PROJECT_SOURCES
