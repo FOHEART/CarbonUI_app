@@ -1,0 +1,9 @@
+QTabWidget::pane { background: #3b3b3b; border-radius:0px; border: 1px solid #2b2b2b; }
+QTabBar { padding-right: 66px; }
+QTabBar::tab { background: #272727; color: #575757; padding: 8px 20px; margin-right: 0px; margin-top: 0px; border: none; }
+QTabBar::tab:selected { background: #2e2e2e; color: #cdcdcd; }
+
+/* scroller (overflow arrows) styling */
+QTabBar::scroller { background-color: transparent; }
+QTabBar::scroller QToolButton { background-color: #3b3b3b; color: #cdcdcd; border: none; padding: 0px; margin: 0px; min-width: 22px; min-height: 22px; border-radius: 0px; }
+
