@@ -5,7 +5,7 @@
  */
 
 #include "MainWindow.h"
-#include "carbonuiclass.h"
+#include "CarbonUIClass.h"
 #include <QtGui/QFontDatabase>
 #include <QtWidgets/QTabBar>
 #include <QtWidgets/QLabel>
