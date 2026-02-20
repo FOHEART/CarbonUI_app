@@ -42,6 +42,10 @@ jobs:
           - os: ubuntu-latest
             c_compiler: cl
 
+ # Provide the private-repo token via repository secret named XSTYPES_PAT
+    env:
+      XSTYPES_PAT: ${{ secrets.XSTYPES_PAT }}
+      
     steps:
     - uses: actions/checkout@v4
 
