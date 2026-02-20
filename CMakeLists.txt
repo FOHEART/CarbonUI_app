@@ -1,8 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.16)
 project(CarbonUI_app LANGUAGES CXX)
 
-include(cmake/qt.cmake)
-
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -13,23 +11,29 @@ find_package(Qt${QT_VERSION_MAJOR}
         Gui
         Widgets
 )
+
+include(cmake/qt.cmake)
 qt_standard_project_setup()
 
 set(PROJECT_SOURCES
     main.cpp
-    MainWindow.ui
-    MainWindow.h
     MainWindow.cpp
-  
+)
+
+# Put Qt .ui files in a separate variable so IDEs show them under a distinct category
+set(PROJECT_UI
+    MainWindow.ui
+)
+
+# Put header files in a separate variable so IDEs show them under a distinct category
+set(PROJECT_HEADERS
+    MainWindow.h
 )
 
 qt_add_resources(RESOURCES_RCC Resource.qrc)
-qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${RESOURCES_RCC})
+qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS} ${PROJECT_UI} ${RESOURCES_RCC})
 
-set_target_properties(${PROJECT_NAME}
-    PROPERTIES
-        WIN32_EXECUTABLE TRUE
-)
+set_target_properties(${PROJECT_NAME}    PROPERTIES        WIN32_EXECUTABLE TRUE)
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
