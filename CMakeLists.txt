@@ -4,6 +4,10 @@ project(CarbonUI_app LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
+include(cmake/qt.cmake)
+qt_standard_project_setup()
+
 find_package(QT NAMES  Qt5 REQUIRED COMPONENTS Core)
 find_package(Qt${QT_VERSION_MAJOR}
     COMPONENTS
@@ -12,8 +16,7 @@ find_package(Qt${QT_VERSION_MAJOR}
         Widgets
 )
 
-include(cmake/qt.cmake)
-qt_standard_project_setup()
+
 
 set(PROJECT_SOURCES
     main.cpp
