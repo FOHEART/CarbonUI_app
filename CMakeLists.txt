@@ -113,28 +113,7 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMENT "Copying fonts to runtime directory"
 )
 
-# On Windows, try to run windeployqt to automatically copy required Qt DLLs into the target folder
-if (WIN32)
-    # Attempt to find windeployqt on PATH or in common Qt installation locations
-    find_program(WINDEPLOYQT_EXECUTABLE NAMES windeployqt.exe windeployqt HINTS $ENV{QTDIR} $ENV{QT_DIR} PATH)
-    if (NOT WINDEPLOYQT_EXECUTABLE)
-        # Also try near the Qt5_DIR if defined
-        if (DEFINED Qt5_DIR)
-            get_filename_component(_qt_dir "${Qt5_DIR}" DIRECTORY)
-            get_filename_component(_qt_bin "${_qt_dir}/bin" ABSOLUTE)
-            find_program(WINDEPLOYQT_EXECUTABLE NAMES windeployqt.exe windeployqt HINTS "${_qt_bin}")
-        endif()
-    endif()
-
-    if (WINDEPLOYQT_EXECUTABLE)
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "Running windeployqt to deploy Qt runtime DLLs"
-            # Use the built executable path as the target for deployment
-            COMMAND "${WINDEPLOYQT_EXECUTABLE}" "$<TARGET_FILE:${PROJECT_NAME}>"
-            COMMENT "Auto-deploying Qt DLLs with windeployqt"
-        )
-    else()
-        message(WARNING "windeployqt not found. Qt runtime DLLs will not be auto-copied. Install Qt bin directory on PATH or set QTDIR/Qt5_DIR.")
-    endif()
-endif()
+# Run windeployqt (if available) to deploy Qt runtime DLLs for the executable
+# Function `run_windeployqt` is defined in cmake/qt.cmake and is a no-op on non-Windows platforms.
+run_windeployqt(${PROJECT_NAME})
 
