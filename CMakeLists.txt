@@ -51,6 +51,20 @@ qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS} ${PROJEC
 
 set_target_properties(${PROJECT_NAME}    PROPERTIES        WIN32_EXECUTABLE TRUE)
 
+# Set final build output directory to "output" folder at project root
+set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/output")
+set_target_properties(${PROJECT_NAME} PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
+    ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIR}"
+    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIR}"
+    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}"
+    ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIR}"
+    ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}"
+)
+
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
         Qt${QT_VERSION_MAJOR}::Core
@@ -116,4 +130,11 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # Run windeployqt (if available) to deploy Qt runtime DLLs for the executable
 # Function `run_windeployqt` is defined in cmake/qt.cmake and is a no-op on non-Windows platforms.
 run_windeployqt(${PROJECT_NAME})
+
+# ---------------- CPack packaging ----------------
+# Use a separate cmake/cpack.cmake to setup packaging cmd: cpack -G ZIP
+include(cmake/cpack.cmake)
+
+# Allow callers to override CPACK_PACKAGE_VERSION and CPACK_PACKAGE_CONTACT before calling
+setup_cpack_for_target(${PROJECT_NAME} "${OUTPUT_DIR}")
 
