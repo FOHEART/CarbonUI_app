@@ -57,6 +57,10 @@ int main(int argc, char* argv[]) {
 
 	QApplication app(argc, argv);
 
+	// Resource.qrc 编在静态库 applib 里：不显式引用注册符号时，MSVC 链接器会把
+	// 该目标从 .lib 中丢弃，运行时 QIcon(":/images/...") 全部为空（工具栏无图标）。
+	Q_INIT_RESOURCE(Resource);
+
 #ifdef Q_OS_WIN
 	// Allocate a console window for the GUI application so stdout/stderr are visible
 	if (AttachConsole(ATTACH_PARENT_PROCESS) == 0) {

@@ -39,6 +39,7 @@ class SelectionPage;    ///< 选择与开关测试页（独立 .h/.cpp）。
 class InputPage;        ///< 输入测试页（独立 .h/.cpp）。
 class ListPage;         ///< 列表与折叠测试页（独立 .h/.cpp）。
 class TextOverflowPage; ///< 文本溢出测试页（独立 .h/.cpp）。
+class DialogPage;       ///< 对话框测试页（独立 .h/.cpp）。
 
 /**
  * @brief 主窗口：CarbonUI 控件分类测试台。
@@ -107,5 +108,6 @@ class MainWindow : public QMainWindow {
 	InputPage* inputPage_ = nullptr;               ///< 第 2 页：输入测试页。
 	ListPage* listPage_ = nullptr;                 ///< 第 3 页：列表与折叠测试页。
 	TextOverflowPage* textOverflowPage_ = nullptr; ///< 第 4 页：文本溢出测试页。
+	DialogPage* dialogPage_ = nullptr;             ///< 第 5 页：对话框测试页。
 	                                               /// @}
 };

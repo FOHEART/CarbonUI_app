@@ -21,8 +21,11 @@ JOBS=$( (command -v nproc >/dev/null 2>&1 && nproc) || echo 4 )
 echo "[1/3] configure: $BUILD"
 cmake -S "$ROOT" -B "$BUILD" -DCMAKE_BUILD_TYPE="$CONFIG" || { echo "[ERROR] cmake configure failed"; exit 1; }
 
-echo "[2/3] build: app_unit_tests + app_ui_tests [$CONFIG]"
-cmake --build "$BUILD" -j"$JOBS" --target app_unit_tests app_ui_tests || { echo "[ERROR] build failed"; exit 1; }
+echo "[2/3] build: app_unit_tests + app_ui_tests + app_visual_tests [$CONFIG]"
+# app_visual_tests 必须一起构建：它用 gtest_discover_tests 的 PRE_TEST 发现模式，
+# 不构建时 ctest 会注册一个 *_NOT_BUILT 占位用例并判失败。该套件本地默认跳过
+# （见 tests/visual/app_screenshot_test.cpp 的开关说明），构建它不增加耗时。
+cmake --build "$BUILD" -j"$JOBS" --target app_unit_tests app_ui_tests app_visual_tests || { echo "[ERROR] build failed"; exit 1; }
 
 echo "[3/3] ctest [$CONFIG]"
 cd "$BUILD" || exit 1

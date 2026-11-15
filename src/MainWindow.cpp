@@ -23,6 +23,7 @@
 
 #include "ButtonPage.h"
 #include "CarbonUIClass.h"
+#include "DialogPage.h"
 #include "InputPage.h"
 #include "ListPage.h"
 #include "SelectionPage.h"
@@ -84,12 +85,14 @@ void MainWindow::createPages() {
 	inputPage_ = new InputPage(this);
 	listPage_ = new ListPage(this);
 	textOverflowPage_ = new TextOverflowPage(this);
+	dialogPage_ = new DialogPage(this);
 
 	ui->tabWidget->addTab(buttonPage_, QString());
 	ui->tabWidget->addTab(selectionPage_, QString());
 	ui->tabWidget->addTab(inputPage_, QString());
 	ui->tabWidget->addTab(listPage_, QString());
 	ui->tabWidget->addTab(textOverflowPage_, QString());
+	ui->tabWidget->addTab(dialogPage_, QString());
 }
 
 /**
@@ -138,8 +141,8 @@ void MainWindow::connectSignals() {
 	});
 
 	// 各页面交互消息 -> 状态栏临时消息
-	const QList<GalleryPage*> pages = {buttonPage_, selectionPage_, inputPage_, listPage_,
-	                                   textOverflowPage_};
+	const QList<GalleryPage*> pages = {buttonPage_, selectionPage_,    inputPage_,
+	                                   listPage_,   textOverflowPage_, dialogPage_};
 	for (GalleryPage* page : pages) {
 		connect(page, &GalleryPage::statusMessage, this, [this](const QString& message) {
 			statusBar()->showMessage(message, kStatusTimeoutMs);
@@ -202,6 +205,7 @@ void MainWindow::retranslateUi() {
 	ui->tabWidget->setTabText(2, langText("输入", "Input"));
 	ui->tabWidget->setTabText(3, langText("列表与折叠", "Lists"));
 	ui->tabWidget->setTabText(4, langText("文本溢出", "Overflow"));
+	ui->tabWidget->setTabText(5, langText("对话框", "Dialogs"));
 
 	// 各页面内部文本
 	buttonPage_->retranslateUi(lang_);
@@ -209,6 +213,7 @@ void MainWindow::retranslateUi() {
 	inputPage_->retranslateUi(lang_);
 	listPage_->retranslateUi(lang_);
 	textOverflowPage_->retranslateUi(lang_);
+	dialogPage_->retranslateUi(lang_);
 
 	// 状态栏常驻指示
 	statusLang_->setText(langText("语言：中文", "Language: English"));

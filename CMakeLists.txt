@@ -71,6 +71,7 @@ set(APPLIB_SOURCES
     src/InputPage.cpp
     src/ListPage.cpp
     src/TextOverflowPage.cpp
+    src/DialogPage.cpp
     src/AppFont.cpp
 )
 
@@ -82,6 +83,7 @@ set(APPLIB_HEADERS
     inc/InputPage.h
     inc/ListPage.h
     inc/TextOverflowPage.h
+    inc/DialogPage.h
     inc/AppFont.h
 )
 
@@ -216,6 +218,40 @@ add_test(NAME Ui.MainWindow COMMAND app_ui_tests)
 set_tests_properties(Ui.MainWindow PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120)
 
+# 截图基线测试：整窗截取每个 Tab 页与「测试」对话框，与
+# tests/visual/baseline/<平台>/*.png 比对，拦截显示风格回归。
+# 复用 CarbonUI 子库的比对工具（只读 include，不链接其测试目标）。
+add_executable(app_visual_tests
+    tests/visual/main.cpp
+    tests/visual/app_screenshot_test.cpp)
+target_link_libraries(app_visual_tests PRIVATE applib ${GTEST_TARGET} Qt${QT_VERSION_MAJOR}::Widgets)
+target_include_directories(app_visual_tests PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/third_party/CarbonUI/tests/support")
+
+# 基线按平台分目录：字体引擎不同（DirectWrite / FreeType），跨平台共用基线必然假红。
+if(WIN32)
+    set(APP_SCREENSHOT_PLATFORM "windows")
+    set(APP_VISUAL_QPA windows)
+elseif(APPLE)
+    set(APP_SCREENSHOT_PLATFORM "macos")
+    set(APP_VISUAL_QPA offscreen)
+else()
+    set(APP_SCREENSHOT_PLATFORM "linux")
+    set(APP_VISUAL_QPA offscreen)
+endif()
+target_compile_definitions(app_visual_tests PRIVATE
+    CARBONUI_SCREENSHOT_BASELINE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/tests/visual/baseline"
+    CARBONUI_SCREENSHOT_PLATFORM="${APP_SCREENSHOT_PLATFORM}"
+    CARBONUI_APP_VISUAL_FONT="${CMAKE_CURRENT_SOURCE_DIR}/Resources/fonts/HarmonyOS_Sans_SC_Regular.ttf"
+    CARBONUI_APP_VISUAL_QSS="${CMAKE_CURRENT_SOURCE_DIR}/Resources/styles/app.qss")
+
+# 视觉套件本地默认跳过（见 tests/visual/app_screenshot_test.cpp 的开关说明）；
+# gtest_discover_tests 的 PRE_TEST 发现只列用例，不会真正比对。
+gtest_discover_tests(app_visual_tests
+    TEST_PREFIX "Visual."
+    PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=${APP_VISUAL_QPA}" TIMEOUT 180
+    DISCOVERY_MODE PRE_TEST)
+
 # ########################  编译告警等级（仅本工程目标）  ######################
 # MSVC: /W4 + /WX（告警当错误）；GCC/Clang: -Wall -Wextra -Werror。
 # 只加在 applib / 主程序 / 两个测试目标上，不影响 third_party/CarbonUI 与
@@ -225,7 +261,7 @@ if(MSVC)
 else()
     set(PROJECT_WARNING_FLAGS -Wall -Wextra -Werror)
 endif()
-foreach(_project_target applib ${PROJECT_NAME} app_unit_tests app_ui_tests)
+foreach(_project_target applib ${PROJECT_NAME} app_unit_tests app_ui_tests app_visual_tests)
     target_compile_options(${_project_target} PRIVATE ${PROJECT_WARNING_FLAGS})
 endforeach()
 

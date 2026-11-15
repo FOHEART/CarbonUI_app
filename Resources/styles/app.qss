@@ -1,5 +1,11 @@
+/* 主窗口与中心控件底色：深色主题的兜底。QTabWidget 页签栏只占内容宽度，
+   最后一个页签右侧的空白区由 QTabWidget 自身不绘制、透出中心控件底色，
+   不给中心控件上色就会在深色界面上露出一条白带。 */
+QMainWindow, QWidget#centralWidget { background-color: #2e2e2e; }
+
+QTabWidget { background-color: #272727; }
 QTabWidget::pane { background: #3b3b3b; border-radius:0px; border: 1px solid #2b2b2b; }
-QTabBar { padding-right: 66px; }
+QTabBar { background-color: #272727; padding-right: 66px; }
 QTabBar::tab { background: #272727; color: #575757; padding: 8px 20px; margin-right: 0px; margin-top: 0px; border: none; }
 QTabBar::tab:selected { background: #2e2e2e; color: #cdcdcd; }
 

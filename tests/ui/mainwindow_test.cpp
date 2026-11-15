@@ -15,12 +15,16 @@
 
 #include <QtTest/QtTest>
 #include <QtWidgets/QAction>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QToolBar>
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
 
+#include "DialogPage.h"
 #include "MainWindow.h"
 
 /**
@@ -164,6 +168,83 @@ class MainWindowTest : public QObject {
 
 		window.setLanguage(MainWindow::Language::Chinese); // Act：幂等重复设置
 		QCOMPARE(changeCount, 2);                          // Assert：不发新信号
+	}
+
+	/**
+	 * @test   MainWindowUiTest.DialogPageOpensTestDialog
+	 * @brief  行为断言：对话框页的按钮存在，且能构造出标题为「测试」的对话框。
+	 * @details 目的：锁住"新 Tab 页已接入主窗口"与"按钮弹的窗与测试用的窗是
+	 *          同一段构造代码"两条契约。不点按钮（exec 会阻塞），直接调用
+	 *          DialogPage::createTestDialog 检查返回值。
+	 * @expected 能按 objectName 找到 pushButtonOpenDialog；DialogPage 能从
+	 *           主窗口对象树上查到；createTestDialog() 非 NULL、标题为「测试」、
+	 *           含 CarbonUIDialogClose 关闭按钮。
+	 * @priority P1
+	 */
+	void dialogPageOpensTestDialog() {
+		MainWindow window; // Arrange
+		window.show();
+
+		auto* page = window.findChild<DialogPage*>();
+		QVERIFY(page != nullptr);
+		auto* openButton = window.findChild<QPushButton*>(QStringLiteral("pushButtonOpenDialog"));
+		QVERIFY(openButton != nullptr);
+		if (page == nullptr || openButton == nullptr) {
+			return; // 兜底：显式返回帮助静态分析器确认解引用安全
+		}
+
+		QDialog* dialog = page->createTestDialog(nullptr); // Act
+		QVERIFY(dialog != nullptr);
+		if (dialog == nullptr) {
+			return;
+		}
+
+		// Assert：标题、关闭按钮与四条信息行都在
+		auto* title = dialog->findChild<QLabel*>(QStringLiteral("CarbonUIDialogTitle"));
+		QVERIFY(title != nullptr);
+		if (title != nullptr) {
+			QCOMPARE(title->text(), QStringLiteral("测试"));
+		}
+		QVERIFY(dialog->findChild<QPushButton*>(QStringLiteral("CarbonUIDialogClose")) != nullptr);
+		QCOMPARE(dialog->findChildren<QLabel*>(QStringLiteral("CarbonUIDialogRow")).size(), 4);
+
+		delete dialog;
+	}
+
+	/**
+	 * @test   MainWindowUiTest.SelectionLabelClickTogglesCheck
+	 * @brief  行为断言：指示灯居左形态下，点击旁置文案标签也能切换勾选状态。
+	 * @details 目的：锁住 SelectionPage::eventFilter 的"标签点击 → 复选框
+	 *          toggle"转发，避免两种指示灯形态的交互再次分叉（居右形态点文字
+	 *          本来就生效）。用 QTest::mouseClick 把点击打在标签中心。
+	 * @expected 初始未勾选；点 labelCheckA 后 checkIndicatorA 变为勾选；
+	 *           再点一次回到未勾选。
+	 * @priority P1
+	 */
+	void selectionLabelClickTogglesCheck() {
+		MainWindow window; // Arrange
+		window.show();
+		auto* tabs = window.findChild<QTabWidget*>(QStringLiteral("tabWidget"));
+		QVERIFY(tabs != nullptr);
+		if (tabs != nullptr) {
+			tabs->setCurrentIndex(1); // 「选择与开关」页
+		}
+
+		auto* checkBox = window.findChild<QCheckBox*>(QStringLiteral("checkIndicatorA"));
+		auto* label = window.findChild<QLabel*>(QStringLiteral("labelCheckA"));
+		QVERIFY(checkBox != nullptr);
+		QVERIFY(label != nullptr);
+		if (checkBox == nullptr || label == nullptr) {
+			return; // 兜底：显式返回帮助静态分析器确认解引用安全
+		}
+
+		const bool initial = checkBox->isChecked();
+
+		QTest::mouseClick(label, Qt::LeftButton); // Act
+		QCOMPARE(checkBox->isChecked(), !initial);
+
+		QTest::mouseClick(label, Qt::LeftButton);
+		QCOMPARE(checkBox->isChecked(), initial);
 	}
 };
 

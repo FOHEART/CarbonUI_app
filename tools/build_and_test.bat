@@ -81,8 +81,11 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [2/3] build: app_unit_tests + app_ui_tests [%CONFIG%]
-cmake --build "%BUILD%" --config %CONFIG% --target app_unit_tests app_ui_tests
+echo [2/3] build: app_unit_tests + app_ui_tests + app_visual_tests [%CONFIG%]
+REM app_visual_tests 用 gtest_discover_tests 的 PRE_TEST 发现模式：不构建时 ctest
+REM 会注册 app_visual_tests_NOT_BUILT 占位用例并判失败。该套件默认跳过（见
+REM tests/visual/app_screenshot_test.cpp），构建它不增加运行耗时。
+cmake --build "%BUILD%" --config %CONFIG% --target app_unit_tests app_ui_tests app_visual_tests
 if errorlevel 1 (
     echo [ERROR] build failed
     exit /b 1
