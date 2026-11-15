@@ -20,7 +20,7 @@ set "BASE=%~2"
 if "%BASE%"=="" set "BASE=origin/main"
 
 set "LINT_BUILD=out\build\lint"
-set "LINT_OUT=out\lint"
+set "LINT_OUT=out\tidy"
 if not exist "%LINT_OUT%" md "%LINT_OUT%" 2>nul
 
 if /i "%MODE%"=="all" goto :all_mode
@@ -42,7 +42,7 @@ where cpp-linter >nul 2>nul || (
 )
 
 REM LLVM 23 工具统一取自 CLANGTIDY_DIR（版本号命名）。cpp-linter 按无版本名在
-REM PATH 上查找，因此在 out\lint\bin 生成固定名副本，不污染工具目录。
+REM PATH 上查找，因此在 out\tidy\bin 生成固定名副本，不污染工具目录。
 if not defined CLANGTIDY_DIR set "CLANGTIDY_DIR=D:\autotools\clangTidy"
 if not exist "!CLANGTIDY_DIR!\clang-tidy-23_windows-amd64.exe" (
     echo [ERROR] 未找到 clang-tidy-23_windows-amd64.exe：!CLANGTIDY_DIR!（可设 CLANGTIDY_DIR 覆盖）
@@ -145,8 +145,8 @@ cd "$ROOT" || exit 1
 
 MODE=${1:-changed}
 BASE=${2:-origin/main}
-LINT_BUILD="out/build/lint"
-LINT_OUT="out/lint"
+LINT_BUILD="out/build-linux/lint"
+LINT_OUT="out/tidy"
 mkdir -p "$LINT_OUT"
 
 # 编译数据库 + 增量构建（clang-tidy 需要构建树上有真实的 uic/moc 生成头）

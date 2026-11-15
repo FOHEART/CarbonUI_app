@@ -40,7 +40,7 @@ if /i "%CONFIG%"=="all" (
     if errorlevel 1 goto :build_failed
 )
 
-echo [2/2] 完成：out\build\x64-*（运行时已汇总到 out\install\x64-*）
+echo [2/2] 完成：构建树 out\build\x64-*，运行目录 out\build\output\*，部署树 out\install\x64-*
 exit /b 0
 
 REM ── 配置 + 编译 + 部署指定配置 ───────────────────────────────────────────
@@ -92,16 +92,16 @@ JOBS=$( (command -v nproc >/dev/null 2>&1 && nproc) || echo 4 )
 
 build_one() {
     cfg=$1
-    bdir="out/build/x64-$cfg"
+    bdir="out/build-linux/x64-$cfg"
     echo "  -> 配置 $bdir"
     cmake -S "$ROOT" -B "$bdir" -DCMAKE_BUILD_TYPE="$cfg" || return 1
     echo "  -> 编译 $cfg"
     cmake --build "$bdir" -j"$JOBS" || return 1
-    sh "$(dirname "$0")/deploy.bat" "$cfg" || return 1
+    sh "$(dirname "$0")/deploy.bat" "$cfg" "$bdir" || return 1
 }
 
 for cfg in $CONFIGS; do
     build_one "$cfg" || { echo ""; echo "构建未完成，请检查上面的错误输出。"; exit 1; }
 done
 
-echo "[2/2] 完成：out/build/x64-*（运行时已汇总到 out/install/x64-*）"
+echo "[2/2] 完成：构建树 out/build-linux/x64-*，运行目录 out/build-linux/output/*，部署树 out/install/x64-*"

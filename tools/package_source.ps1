@@ -13,7 +13,7 @@ Single implementation shared by Windows (powershell.exe) and Linux (pwsh):
      ProgramFiles\7-Zip) and fall back to Compress-Archive.
 
 Usage:
-  powershell -NoProfile -File tools\package_source.ps1 -OutputDir out\pack [-Version 1.0.0]
+  powershell -NoProfile -File tools\package_source.ps1 -OutputDir out\package [-Version 1.0.0]
 #>
 param(
     [string]$OutputDir = '',
@@ -26,7 +26,7 @@ $repoRoot = git rev-parse --show-toplevel 2>$null
 if ([string]::IsNullOrEmpty($repoRoot)) { $repoRoot = Split-Path -Parent $PSScriptRoot }
 Set-Location $repoRoot
 
-if ([string]::IsNullOrEmpty($OutputDir)) { $OutputDir = Join-Path $repoRoot 'out/pack' }
+if ([string]::IsNullOrEmpty($OutputDir)) { $OutputDir = Join-Path $repoRoot 'out/package' }
 if (-not (Test-Path -LiteralPath $OutputDir))
 {
     New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
@@ -50,6 +50,7 @@ $excludeDirAbsolute = @(
     (Join-Path $repoRoot 'out'),
     (Join-Path $repoRoot 'build'),
     (Join-Path $repoRoot 'output'),
+    (Join-Path $repoRoot 'out/docs'),
     (Join-Path $repoRoot 'docs/html'),
     (Join-Path $repoRoot '.git'),
     (Join-Path $repoRoot '.github'),

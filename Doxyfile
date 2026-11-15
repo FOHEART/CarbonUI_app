@@ -6,16 +6,16 @@
 PROJECT_NAME           = "CarbonUI_app"
 PROJECT_BRIEF          = "基于 CarbonUI 组件库的 Qt5 桌面应用示例"
 PROJECT_NUMBER         = "1.0.0"
-OUTPUT_DIRECTORY       = docs
+OUTPUT_DIRECTORY       = out/docs
 OUTPUT_LANGUAGE        = Chinese
 INPUT_ENCODING         = UTF-8
 
 # ---- 输入 ----
-# 只收代码目录与根级源文件；third_party/build/output 一律排除
+# 只收代码目录与根级源文件；third_party/out/build 一律排除
 INPUT                  = inc src tests docs/groups.dox README.md
 FILE_PATTERNS          = *.h *.cpp *.dox *.md
 RECURSIVE              = YES
-EXCLUDE                = build third_party output docs/html
+EXCLUDE                = build third_party out output
 USE_MDFILE_AS_MAINPAGE = README.md
 
 # ---- 提取策略 ----

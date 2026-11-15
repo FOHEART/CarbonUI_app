@@ -80,7 +80,8 @@ __pycache__/
 *.tmp
 *.swp
 
-# Doxygen 产物（构建产物不入库，见 gen_docs.bat）
+# Doxygen 产物（生成到 out/docs，已由 /out/ 统一忽略；旧 docs/html 一并忽略）
+out/docs/
 docs/html/
 
 # If you keep generated headers or other generated source files in repo, remove them from this file accordingly.

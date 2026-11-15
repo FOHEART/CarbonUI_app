@@ -15,7 +15,7 @@ cd "$ROOT" || exit 1
 
 CONFIG=${1:-Release}
 FILTER=${2:-}
-BUILD="out/build/tdd-tests"
+BUILD="out/build-linux/tdd-tests"
 JOBS=$( (command -v nproc >/dev/null 2>&1 && nproc) || echo 4 )
 
 echo "[1/3] configure: $BUILD"

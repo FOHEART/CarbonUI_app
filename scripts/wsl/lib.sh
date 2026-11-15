@@ -47,6 +47,7 @@ wsl_sync() {
     mkdir -p "$WSL_DEST" || return 1
     rsync -a --delete \
         --exclude 'out' --exclude '.git' --exclude 'output' \
+        --exclude 'out/docs' --exclude 'out/doxygen' \
         --exclude 'docs/html' --exclude 'docs/doxygen' \
         "$src/" "$WSL_DEST/" || { echo "[ERROR] rsync 失败：$src -> $WSL_DEST"; return 1; }
     # --delete 不会删「被排除」的路径，所以副本里的 out/ 会保留下来做增量构建；统计时排除它

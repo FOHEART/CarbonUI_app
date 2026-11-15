@@ -1,6 +1,19 @@
 ﻿cmake_minimum_required(VERSION 3.16)
 project(CarbonUI_app LANGUAGES CXX)
 
+# ----------------------------------------------------------------------------
+# 生成物统一收敛到 out/（见技能 references/build-scripts/CMake构建输出目录规范）：
+#   out/build           Windows 构建树；out/build-linux  Linux/WSL 构建树（按系统隔离）
+#   out/build*/output/<Config>  可直接运行的目录（exe + Qt DLL + Resources，按配置隔离）
+#   out/install         部署树；out/package 分发包；out/docs 文档；out/tidy 静态检查报告
+# ----------------------------------------------------------------------------
+if(WIN32)
+  set(PROJECT_BUILD_ROOT "${CMAKE_SOURCE_DIR}/out/build")
+else()
+  set(PROJECT_BUILD_ROOT "${CMAKE_SOURCE_DIR}/out/build-linux")
+endif()
+set(OUTPUT_DIR "${PROJECT_BUILD_ROOT}/output/$<CONFIG>")
+
 # GoogleTest 1.14 起要求 C++14；Qt 5.15 完全兼容
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -111,18 +124,12 @@ qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 set_target_properties(${PROJECT_NAME}    PROPERTIES        WIN32_EXECUTABLE TRUE)
 
-# Set final build output directory to "output" folder at project root
-set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/output")
+# 最终产物落到 out/build*/output/<Config>，不再写仓库根 output/
+# （$<CONFIG> 已按配置隔离，多配置生成器不会再自动追加一层配置子目录）
 set_target_properties(${PROJECT_NAME} PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
     LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
     ARCHIVE_OUTPUT_DIRECTORY "${OUTPUT_DIR}"
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIR}"
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}"
-    LIBRARY_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIR}"
-    LIBRARY_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}"
-    ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_DIR}"
-    ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_DIR}"
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -145,13 +152,13 @@ if (TARGET CarbonUI)
     endif()
 endif()
 
-# After build, copy the 'fonts' directory from the source tree to the target runtime directory
+# After build, copy the whole 'Resources' directory (fonts + styles QSS) to the runtime directory
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E echo "Copying fonts directory to runtime folder"
+    COMMAND ${CMAKE_COMMAND} -E echo "Copying Resources directory to runtime folder"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_SOURCE_DIR}/Resources/fonts"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/fonts"
-    COMMENT "Copying fonts to runtime directory"
+        "${CMAKE_SOURCE_DIR}/Resources"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/Resources"
+    COMMENT "Copying Resources to runtime directory"
 )
 
 # Run windeployqt (if available) to deploy Qt runtime DLLs for the executable
@@ -229,6 +236,7 @@ find_program(DOXYGEN_EXECUTABLE doxygen
 if(DOXYGEN_EXECUTABLE)
     message(STATUS "doxygen found: ${DOXYGEN_EXECUTABLE}")
     add_custom_target(docs
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${CMAKE_SOURCE_DIR}/out/doxygen"
         COMMAND "${DOXYGEN_EXECUTABLE}" Doxyfile
         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
         COMMENT "Generating API documentation with Doxygen"

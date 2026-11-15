@@ -5,7 +5,7 @@ REM  package.bat -- 打可分发源码 ZIP（逻辑只有一份 tools\package_so
 REM  用法：scripts\package.bat [版本号]
 setlocal
 for %%I in ("%~dp0..") do set "ROOT=%%~fI"
-set "OUTDIR=%ROOT%\out\pack"
+set "OUTDIR=%ROOT%\out\package"
 if not exist "%OUTDIR%" md "%OUTDIR%" 2>nul
 
 if "%~1"=="" (
@@ -30,10 +30,10 @@ if [ -z "$PS" ]; then
     exit 1
 fi
 
-mkdir -p out/pack
+mkdir -p out/package
 if [ -n "${1:-}" ]; then
-    "$PS" -NoProfile -File tools/package_source.ps1 -OutputDir out/pack -Version "$1"
+    "$PS" -NoProfile -File tools/package_source.ps1 -OutputDir out/package -Version "$1"
 else
-    "$PS" -NoProfile -File tools/package_source.ps1 -OutputDir out/pack
+    "$PS" -NoProfile -File tools/package_source.ps1 -OutputDir out/package
 fi
 exit $?

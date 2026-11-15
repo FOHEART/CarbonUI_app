@@ -27,8 +27,8 @@ if errorlevel 1 (
 )
 
 echo.
-echo [OK] html generated: %ROOT%\docs\html\index.html
-start "" "%ROOT%\docs\html\index.html"
+echo [OK] html generated: %ROOT%\out\docs\html\index.html
+start "" "%ROOT%\out\docs\html\index.html"
 popd
 exit /b 0
 
@@ -53,4 +53,4 @@ if ! "$DOXYGEN_BIN" Doxyfile; then
 fi
 
 echo ""
-echo "[OK] html generated: $ROOT/docs/html/index.html"
+echo "[OK] html generated: $ROOT/out/docs/html/index.html"

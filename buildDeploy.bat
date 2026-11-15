@@ -95,10 +95,11 @@ if errorlevel 1 goto :failed
 
 echo.
 echo  全流程完成：
-echo    编译/部署：out\install\x64-*（运行时汇总，含 Qt DLL 与 fonts）
+echo    运行目录：out\build\output\*（exe + Qt DLL + Resources，按配置隔离）
+echo    部署树  ：out\install\x64-*（汇总后的可运行副本）
 echo    单元测试：out\build\tdd-tests（结果见上方 ctest 输出）
-echo    文档    ：docs\html\index.html
-echo    源码包  ：out\pack\CarbonUI_app_v*.zip
+echo    文档    ：out\docs\html\index.html
+echo    源码包  ：out\package\CarbonUI_app_v*.zip
 exit /b 0
 
 :failed
@@ -147,4 +148,4 @@ sh scripts/test.bat "${1:-Release}" || exit 1
 sh scripts/gen_docs.bat || exit 1
 sh scripts/package.bat || exit 1
 echo ""
-echo "[OK] 全流程完成：out/build/x64-* / out/install/x64-* / docs/html / out/pack"
+echo "[OK] 全流程完成：out/build-linux/x64-* / out/build-linux/output/* / out/install/x64-* / out/docs/html / out/package"

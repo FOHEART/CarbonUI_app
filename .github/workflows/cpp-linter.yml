@@ -59,7 +59,7 @@ jobs:
       - name: Configure CMake (export compile_commands.json)
         shell: bash
         run: |
-          cmake -B build -S . \
+          cmake -B out/build-linux/lint -S . \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DCMAKE_PREFIX_PATH="${QT_ROOT_DIR:-$QT_CACHE_DIR/Qt/5.14.2/gcc_64}"
@@ -68,7 +68,7 @@ jobs:
       # 必须真实存在于构建树，否则对 #include "ui_*.h" 报 clang-diagnostic-error。
       - name: Build (generate uic/moc artifacts)
         shell: bash
-        run: cmake --build build
+        run: cmake --build out/build-linux/lint
 
       - uses: cpp-linter/cpp-linter-action@v2
         id: linter
@@ -78,7 +78,7 @@ jobs:
           version: '23'
           style: file
           tidy-checks: ''
-          database: build
+          database: out/build-linux/lint
           lines-changed-only: true
           tidy-review: true
 

@@ -1,7 +1,7 @@
 :; exec sh -c "$(sed -n '/^#__SH__/,$p' "$0" | tr -d '\r')" "$0" "$@" #
 @echo off
 chcp 65001 >nul
-REM  deploy.bat -- 把运行时产物（exe + Qt DLL + fonts）汇总到 out\install\x64-%CONFIG%
+REM  deploy.bat -- 把运行时产物（exe + Qt DLL + Resources）从 out\build\output\%CONFIG% 汇总到 out\install\x64-%CONFIG%
 REM  用法：scripts\deploy.bat [Debug|Release] [构建树目录]
 setlocal EnableDelayedExpansion
 for %%I in ("%~dp0..") do set "ROOT=%%~fI"
@@ -24,7 +24,7 @@ if not exist "%BDIR%\CMakeCache.txt" (
 )
 
 set "INSTALL=out\install\x64-%CONFIG%"
-set "RUNTIME=%ROOT%\output"
+set "RUNTIME=%ROOT%\out\build\output\%CONFIG%"
 if not exist "%RUNTIME%\CarbonUI_app.exe" (
     echo [ERROR] 未找到运行时输出 %RUNTIME%\CarbonUI_app.exe（CMake 将产物输出到该目录）。
     exit /b 1
@@ -43,7 +43,7 @@ set "EXE_COUNT=0"
 set "DLL_COUNT=0"
 for %%F in ("%INSTALL%\*.exe") do set /a EXE_COUNT+=1
 for %%F in ("%INSTALL%\*.dll") do set /a DLL_COUNT+=1
-echo      %INSTALL%：!EXE_COUNT! 个 exe，!DLL_COUNT! 个 DLL（含 fonts 目录）
+echo      %INSTALL%：!EXE_COUNT! 个 exe，!DLL_COUNT! 个 DLL（含 Resources 目录）
 exit /b 0
 
 #__SH__
@@ -58,14 +58,14 @@ if [ "$CONFIG" = "all" ]; then
     exit 0
 fi
 
-BDIR=${2:-out/build/x64-$CONFIG}
+BDIR=${2:-out/build-linux/x64-$CONFIG}
 if [ ! -f "$BDIR/CMakeCache.txt" ]; then
     echo "[ERROR] 未找到构建树 $BDIR，请先运行 sh scripts/build.bat。"
     exit 1
 fi
 
 INSTALL="out/install/x64-$CONFIG"
-RUNTIME="$ROOT/output"
+RUNTIME="$ROOT/out/build-linux/output/$CONFIG"
 if [ ! -e "$RUNTIME/CarbonUI_app.exe" ] && [ ! -e "$RUNTIME/CarbonUI_app" ]; then
     echo "[ERROR] 未找到运行时输出 $RUNTIME（CMake 将产物输出到该目录）。"
     exit 1
@@ -75,5 +75,5 @@ echo "  -> 汇总运行时到 $INSTALL"
 rm -rf "$INSTALL"
 mkdir -p "$INSTALL"
 cp -r "$RUNTIME/." "$INSTALL/" || { echo "[ERROR] 运行时汇总失败"; exit 1; }
-echo "     $INSTALL：$(ls "$INSTALL" | grep -c -E 'CarbonUI_app(\.exe)?$' | tr -d ' ') 个可执行文件（含 fonts 目录）"
+echo "     $INSTALL：$(ls "$INSTALL" | grep -c -E 'CarbonUI_app(\.exe)?$' | tr -d ' ') 个可执行文件（含 Resources 目录）"
 echo "     运行前可执行：export LD_LIBRARY_PATH=\"\$PWD\""
