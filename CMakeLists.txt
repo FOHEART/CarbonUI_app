@@ -5,6 +5,14 @@ project(CarbonUI_app LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 源码统一 UTF-8（含中文注释/字面量）。目录属性只对"其后创建"的目标生效，
+# 因此必须放在任何 add_library/add_executable 之前，否则 MSVC 会报 C4566。
+if (MSVC)
+  add_compile_options(/utf-8)
+else()
+  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
+endif()
+
 include(cmake/qt.cmake)
 
 # --- Qt5 discovery (cross-platform) ---
@@ -30,25 +38,26 @@ qt_standard_project_setup()
 
 
 # ########################  3rd party dependencies  #########################
-# CarbonUI 以 git submodule 形式引入（third_party/CarbonUI），直接 add_subdirectory。
-set(BUILD_CARBONUI_SHARED OFF CACHE BOOL "Build CarbonUI as shared library" FORCE)
+# CarbonUI 以子模块形式引入（third_party/CarbonUI），直接 add_subdirectory。
+# 用 option() 而非 CACHE FORCE：CI 矩阵经 -DBUILD_CARBONUI_SHARED=ON/OFF 传值时须被尊重。
+option(BUILD_CARBONUI_SHARED "Build CarbonUI as shared library" OFF)
 add_subdirectory(third_party/CarbonUI)
 
 # ########################  应用库（可测核心）  ##############################
 # 主窗口 + 纯逻辑模块编成静态库，供可执行文件与测试目标共享同一套编译选项
 # （TDD 约定：测试与实现同仓同构建，共享标准/编码/运行时库设置）。
 set(APPLIB_SOURCES
-    MainWindow.cpp
-    core/AppFont.cpp
+    src/MainWindow.cpp
+    src/AppFont.cpp
 )
 
 set(APPLIB_HEADERS
-    MainWindow.h
-    core/AppFont.h
+    inc/MainWindow.h
+    inc/AppFont.h
 )
 
 set(APPLIB_UI
-    MainWindow.ui
+    ui/MainWindow.ui
 )
 
 set(APPLIB_RCC
@@ -56,10 +65,17 @@ set(APPLIB_RCC
 )
 
 add_library(applib STATIC ${APPLIB_SOURCES} ${APPLIB_HEADERS} ${APPLIB_UI} ${APPLIB_RCC})
+# .ui 文件集中在 ui/ 目录，AUTOUIC 默认只按源文件所在目录搜索，需显式指定
+set_target_properties(applib PROPERTIES AUTOUIC_SEARCH_PATHS "${CMAKE_CURRENT_SOURCE_DIR}/ui")
+# ui_MainWindow.h 由 uic 生成：.ui 中的中文被转成八进制转义，后跟数字（如"设置2"
+# 的 2）会触发 MSVC C4125（八进制转义被十进制数字终止）。这是生成代码的固有形态，
+# 仅对包含该头文件的编译单元精确豁免，其余本工程代码保持 /W4 /WX 严格告警。
+if(MSVC)
+    set_source_files_properties(src/MainWindow.cpp PROPERTIES COMPILE_OPTIONS /wd4125)
+endif()
 target_include_directories(applib
     PUBLIC
-        "${CMAKE_CURRENT_SOURCE_DIR}"
-        "${CMAKE_CURRENT_SOURCE_DIR}/core"
+        "${CMAKE_CURRENT_SOURCE_DIR}/inc"
         "${CMAKE_CURRENT_BINARY_DIR}"
 )
 target_link_libraries(applib
@@ -72,7 +88,7 @@ target_link_libraries(applib
 
 # ########################  主程序  ##############################
 set(PROJECT_SOURCES
-    main.cpp
+    src/main.cpp
 )
 
 qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
@@ -117,7 +133,7 @@ endif()
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "Copying fonts directory to runtime folder"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_SOURCE_DIR}/fonts"
+        "${CMAKE_SOURCE_DIR}/Resources/fonts"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/fonts"
     COMMENT "Copying fonts to runtime directory"
 )
@@ -125,15 +141,6 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # Run windeployqt (if available) to deploy Qt runtime DLLs for the executable
 # Function `run_windeployqt` is defined in cmake/qt.cmake and is a no-op on non-Windows platforms.
 run_windeployqt(${PROJECT_NAME})
-
-# Ensure source files are interpreted as UTF-8 by the compiler
-# - MSVC: use /utf-8
-# - GCC/Clang: use -finput-charset and -fexec-charset
-if (MSVC)
-  add_compile_options(/utf-8)
-else()
-  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
-endif()
 
 # ---------------- CPack packaging ----------------
 # Use a separate cmake/cpack.cmake to setup packaging cmd: cpack -G ZIP
@@ -173,7 +180,7 @@ include(GoogleTest)
 add_executable(app_unit_tests tests/unit/appfont_test.cpp)
 target_link_libraries(app_unit_tests PRIVATE applib ${GTEST_TARGET})
 target_compile_definitions(app_unit_tests PRIVATE
-    CARBONUI_APP_TEST_FONT="${CMAKE_SOURCE_DIR}/fonts/HarmonyOS_Sans_SC_Bold.ttf")
+    CARBONUI_APP_TEST_FONT="${CMAKE_SOURCE_DIR}/Resources/fonts/HarmonyOS_Sans_SC_Bold.ttf")
 gtest_discover_tests(app_unit_tests
     TEST_PREFIX "Unit."
     PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120
@@ -185,6 +192,19 @@ target_link_libraries(app_ui_tests PRIVATE applib Qt${QT_VERSION_MAJOR}::Test)
 add_test(NAME Ui.MainWindow COMMAND app_ui_tests)
 set_tests_properties(Ui.MainWindow PROPERTIES
     ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120)
+
+# ########################  编译告警等级（仅本工程目标）  ######################
+# MSVC: /W4 + /WX（告警当错误）；GCC/Clang: -Wall -Wextra -Werror。
+# 只加在 applib / 主程序 / 两个测试目标上，不影响 third_party/CarbonUI 与
+# FetchContent 拉取的 googletest。
+if(MSVC)
+    set(PROJECT_WARNING_FLAGS /W4 /WX)
+else()
+    set(PROJECT_WARNING_FLAGS -Wall -Wextra -Werror)
+endif()
+foreach(_project_target applib ${PROJECT_NAME} app_unit_tests app_ui_tests)
+    target_compile_options(${_project_target} PRIVATE ${PROJECT_WARNING_FLAGS})
+endforeach()
 
 # ---------------- Doxygen 文档（可选目标：cmake --build . --target docs） ----------------
 find_program(DOXYGEN_EXECUTABLE doxygen

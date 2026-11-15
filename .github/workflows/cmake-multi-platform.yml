@@ -50,6 +50,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         token: ${{ secrets.XSTYPES_PAT }}
+        submodules: recursive
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
@@ -108,6 +109,8 @@ jobs:
         sudo apt-get install -y --no-install-recommends \
           libgl1-mesa-dev \
           mesa-common-dev \
+          libfontconfig1-dev \
+          libfreetype6-dev \
           libxkbcommon-x11-0 \
           libx11-xcb1 \
           libxcb-icccm4 \
@@ -250,10 +253,26 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DBUILDCARBONUI_SHARED=${{ matrix.build_shared }}
+        -DBUILD_CARBONUI_SHARED=${{ matrix.build_shared }}
         -DQt5_DIR=${{ env.Qt5_DIR }}
         -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
         -S ${{ github.workspace }}
+
+    - name: Add runtime library paths (Windows only)
+      # ctest 时的用例发现（PRE_TEST）会直接运行测试 exe，Qt DLL 与 CarbonUI
+      # 运行库必须在 PATH 上，否则用例发现阶段就挂。
+      if: matrix.os == 'windows-latest'
+      shell: bash
+      run: |
+        echo "${CMAKE_PREFIX_PATH}/bin" >> "$GITHUB_PATH"
+        echo "${{ github.workspace }}/build/third_party/CarbonUI/Release" >> "$GITHUB_PATH"
+
+    - name: Add runtime library paths (Ubuntu only)
+      if: matrix.os == 'ubuntu-latest'
+      shell: bash
+      run: |
+        echo "${CMAKE_PREFIX_PATH}/bin" >> "$GITHUB_PATH"
+        echo "${{ github.workspace }}/build/third_party/CarbonUI" >> "$GITHUB_PATH"
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).

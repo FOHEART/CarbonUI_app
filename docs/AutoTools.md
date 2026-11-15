@@ -30,5 +30,6 @@
 
 | 环节 | 工具 |
 | --- | --- |
-| Doxygen 文档（`Doxyfile` 零告警） | `D:\autotools\doxygen-1.11.0\doxygen.exe`（`gen_docs.bat` 已内置该路径） |
-| 静态检查 / 格式化（按需） | `D:\autotools\clangTidy` 下的 clang-tidy / clang-format |
+| Doxygen 文档（`Doxyfile` 零告警） | `D:\autotools\doxygen-1.11.0\doxygen.exe`（`scripts\gen_docs.bat` 已内置该路径，也可用 `DOXYGEN` 环境变量覆盖） |
+| GitHub CI 结果查询/重跑/拉产物 | `D:\autotools\gh_windows_amd64\bin\gh.exe`（`scripts\ci\ci_common.ps1` 已内置该默认路径） |
+| 源码打包压缩 | `D:\autotools\7z\7za.exe`（`tools\package_source.ps1` 回退链中的一环） |

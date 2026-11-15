@@ -12,7 +12,7 @@ INPUT_ENCODING         = UTF-8
 
 # ---- 输入 ----
 # 只收代码目录与根级源文件；third_party/build/output 一律排除
-INPUT                  = core tests main.cpp MainWindow.h MainWindow.cpp docs/groups.dox README.md
+INPUT                  = inc src tests docs/groups.dox README.md
 FILE_PATTERNS          = *.h *.cpp *.dox *.md
 RECURSIVE              = YES
 EXCLUDE                = build third_party output docs/html
@@ -40,7 +40,7 @@ WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
 WARN_NO_PARAMDOC       = YES
 WARN_AS_ERROR          = YES
-WARN_LOGFILE           = doxygen_warnings.log
+WARN_LOGFILE           = out/doxygen/doxygen_warnings.log
 
 # ---- 别名（团队统一字段）----
 # 用例注释五字段中的 @expected / @test / @priority 不是内置命令，用别名展开为普通段落标题
