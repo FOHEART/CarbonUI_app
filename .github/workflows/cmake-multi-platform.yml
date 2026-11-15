@@ -280,9 +280,13 @@ jobs:
 
     - name: Test
       working-directory: ${{ steps.strings.outputs.build-output-dir }}
-      # Execute tests defined by the CMake configuration. Note that --build-config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
+      # CI 是无头环境：ctest 的用例发现（gtest_discover_tests PRE_TEST）在读取
+      # 测试属性前就会直接运行测试 exe，test 属性里的 ENVIRONMENT 不生效，
+      # 必须在步骤级注入离屏平台，否则 Qt 找 xcb 连显示器直接崩。
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
+      env:
+        QT_QPA_PLATFORM: offscreen
 
  
 
