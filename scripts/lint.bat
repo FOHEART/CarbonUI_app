@@ -84,14 +84,14 @@ echo [1/2] 全量 clang-tidy 扫描（排除 third_party/_deps/autogen）...
 call "%CLANGTIDY_DIR%\scripts\check.bat"
 exit /b %errorlevel%
 
-REM ── 编译数据库生成：Ninja + vcvars（VS 生成器不支持导出 compile_commands.json）──
+REM ── 编译数据库 + lint 构建树：Ninja + vcvars（VS 生成器不支持导出 compile_commands.json）
+REM    clang-tidy 需要完整的可编译状态：uic/moc 生成头（ui_MainWindow.h 等）必须在
+REM    构建树上真实存在，否则对 #include "ui_*.h" 报 clang-diagnostic-error。
+REM    因此除首次 configure 外，每次都做一次增量构建（通常为秒级 no-op）。
 :ensure_compile_db
-if exist "%LINT_BUILD%\compile_commands.json" (
-    echo [INFO] 编译数据库已存在：%LINT_BUILD%\compile_commands.json
-    exit /b 0
-)
 if not defined QT_PREFIX set "QT_PREFIX=D:/Qt5.15.2/5.15.2/msvc2019_64"
 
+REM configure 与 build 都必须在 VS 环境内（cl 需要 INCLUDE/LIB；Ninja 由 VS 提供）
 set "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
 set "VSROOT="
 set "VSW_OUT=%TEMP%\lint_vswhere.txt"
@@ -114,15 +114,26 @@ if errorlevel 1 (
     exit /b 2
 )
 
-echo [INFO] 生成编译数据库：%LINT_BUILD%
-cmake -S "%ROOT%" -B "%LINT_BUILD%" -G Ninja -DCMAKE_BUILD_TYPE=Release ^
-    -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_PREFIX_PATH="%QT_PREFIX%"
-if errorlevel 1 (
-    echo [ERROR] cmake configure failed
-    exit /b 1
-)
 if not exist "%LINT_BUILD%\compile_commands.json" (
-    echo [ERROR] compile_commands.json was not generated
+    echo [INFO] 生成编译数据库：%LINT_BUILD%
+    cmake -S "%ROOT%" -B "%LINT_BUILD%" -G Ninja -DCMAKE_BUILD_TYPE=Release ^
+        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_PREFIX_PATH="%QT_PREFIX%"
+    if errorlevel 1 (
+        echo [ERROR] cmake configure failed
+        exit /b 1
+    )
+    if not exist "%LINT_BUILD%\compile_commands.json" (
+        echo [ERROR] compile_commands.json was not generated
+        exit /b 1
+    )
+) else (
+    echo [INFO] 编译数据库已存在：%LINT_BUILD%\compile_commands.json
+)
+
+echo [INFO] 增量构建 lint 树（生成 uic/moc 产物，通常为秒级）...
+cmake --build "%LINT_BUILD%"
+if errorlevel 1 (
+    echo [ERROR] lint build failed
     exit /b 1
 )
 exit /b 0
@@ -138,13 +149,15 @@ LINT_BUILD="out/build/lint"
 LINT_OUT="out/lint"
 mkdir -p "$LINT_OUT"
 
-# 编译数据库（Linux/WSL 上 Ninja 直接可用）
+# 编译数据库 + 增量构建（clang-tidy 需要构建树上有真实的 uic/moc 生成头）
 if [ ! -f "$LINT_BUILD/compile_commands.json" ]; then
     echo "[INFO] 生成编译数据库：$LINT_BUILD"
     cmake -S "$ROOT" -B "$LINT_BUILD" -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_EXPORT_COMPILE_COMMANDS=ON || { echo "[ERROR] cmake configure failed"; exit 1; }
 fi
+echo "[INFO] 增量构建 lint 树（生成 uic/moc 产物）..."
+cmake --build "$LINT_BUILD" || { echo "[ERROR] lint build failed"; exit 1; }
 
 if ! command -v cpp-linter >/dev/null 2>&1; then
     echo "[ERROR] 未找到 cpp-linter。安装：" >&2

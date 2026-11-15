@@ -1,56 +1,111 @@
 ﻿/**
  * @file  MainWindow.h
- * @brief 应用主窗口声明：装配 CarbonUI 风格控件并持有 .ui 生成的界面。
+ * @brief 应用主窗口声明：CarbonUI 控件分类测试台（多 Tab + 菜单栏 + 状态栏 + 中英文切换）。
  * @author FOHEART
  * @date  2026-11-15
  * @version 1.0.0
  * @ingroup carbonui_app_core
  *
  * @details
- * MainWindow 只做界面装配（样式应用、折叠器安装），不含业务算法；
- * 可测逻辑统一放在 core/ 下的纯逻辑模块。
- * ui 控件集以指针持有（前向声明避免在头文件包含生成的 ui_MainWindow.h，
- * 使 applib 的消费者无需看到 AUTOUIC 输出目录）。
+ * MainWindow 负责三件事：
+ *  1. 界面装配：setupUi（菜单/工具栏/状态栏/空 TabWidget 骨架）+ 创建五个
+ *     页面控件（ButtonPage / SelectionPage / InputPage / ListPage /
+ *     TextOverflowPage，各自独立 .h/.cpp）并加入 Tab + 容器级 CarbonUI 风格；
+ *  2. 语言管理：@ref setLanguage 切换中英文并触发 @ref retranslateUi 全量
+ *     重翻译（窗口标题、Tab 标题、菜单、状态栏），并下发给各页面
+ *     （页面内部文本由页面自己覆写）；
+ *  3. 交互反馈：接收各页面的 @ref GalleryPage::statusMessage 消息并显示
+ *     到状态栏。
+ *
+ * .ui 文件（ui/MainWindow.ui）只含窗口骨架（菜单栏、工具栏、状态栏与空的
+ * QTabWidget），可在 Qt Designer 中自由编辑；各 Tab 页内容在对应页面类中
+ * 用代码装配。Designer 里的默认文本仅作预览用途，retranslateUi 会统一覆写。
  * 生命周期：栈上创建，析构时手工释放 ui 对象（控件本身随父子树释放）。
  * 线程安全：仅允许在 GUI 主线程构造与使用。
  */
 
 #pragma once
 
-#include <QtWidgets/QMainWindow>
-#include <QtWidgets/QRadioButton>
-#include <QtWidgets/QMenuBar>
+#include "GalleryPage.h"
 
-namespace Ui
-{
+#include <QtWidgets/QLabel>
+#include <QtWidgets/QMainWindow>
+
+namespace Ui {
 class MainWindow; ///< 由 MainWindow.ui 经 uic 生成的界面类（完整定义在 ui_MainWindow.h）。
 }
+class ButtonPage;       ///< 按钮测试页（独立 .h/.cpp）。
+class SelectionPage;    ///< 选择与开关测试页（独立 .h/.cpp）。
+class InputPage;        ///< 输入测试页（独立 .h/.cpp）。
+class ListPage;         ///< 列表与折叠测试页（独立 .h/.cpp）。
+class TextOverflowPage; ///< 文本溢出测试页（独立 .h/.cpp）。
 
 /**
- * @brief 主窗口：加载 MainWindow.ui 并对 tab/tree/菜单栏/工具栏等控件应用 CarbonUI 风格。
+ * @brief 主窗口：CarbonUI 控件分类测试台。
  *
  * @details
- * 构造函数内完成全部装配工作（setupUi + CarbonUIClass 系列 apply/setup 调用 +
- * QGroupBoxCollapser 安装），构造完成后窗口即可显示使用。
- * 无共享状态，线程亲和性为 GUI 主线程。
+ * 构造完成后窗口即可显示使用：五个页面已装配并应用 CarbonUI 风格、默认
+ * 语言为中文、页面交互事件已接入状态栏。语言切换入口在菜单栏"语言"菜单
+ * （中文 / English）。无共享状态，线程亲和性为 GUI 主线程。
  */
-class MainWindow : public QMainWindow
-{
-    Q_OBJECT
+class MainWindow : public QMainWindow {
+	Q_OBJECT
 
-public:
-    /**
-     * @brief 构造主窗口：装配 .ui 界面并应用 CarbonUI 风格。
-     * @param[in] parent 父窗口指针，可为 NULL；为 NULL 时成为独立顶层窗口。
-     */
-    MainWindow(QWidget *parent = nullptr);
+  public:
+	/// @brief 界面语言枚举：复用页面基类的全工程唯一来源。
+	using Language = GalleryPage::Language;
 
-    /** @brief 析构主窗口：释放 ui 对象，子控件随 Qt 父子树自动释放。 */
-    ~MainWindow();
+	/**
+	 * @brief 构造主窗口：装配 .ui 骨架、创建页面、应用 CarbonUI 风格、接入状态栏反馈。
+	 * @param[in] parent 父窗口指针，可为 NULL；为 NULL 时成为独立顶层窗口。
+	 */
+	MainWindow(QWidget* parent = nullptr);
 
-private:
-    /// @name 界面成员
-    /// @{
-    Ui::MainWindow *ui; ///< 由 MainWindow.ui 生成的控件集合，构造时创建、析构时释放。
-    /// @}
+	/** @brief 析构主窗口：释放 ui 对象，子控件随 Qt 父子树自动释放。 */
+	~MainWindow() override;
+
+	/**
+	 * @brief 切换界面语言并全量重翻译（含向各页面下发语言）。
+	 *
+	 * @details
+	 * 重复设置当前语言为幂等操作（直接返回）；切换后发出 @ref languageChanged。
+	 * @param[in] lang 目标语言，取值必须为 ::MainWindow::Language 枚举值。
+	 */
+	void setLanguage(Language lang);
+
+	/**
+	 * @brief 查询当前界面语言。
+	 * @return 当前语言，取值为 ::MainWindow::Language 枚举值。
+	 */
+	Language currentLanguage() const;
+
+  signals:
+	/**
+	 * @brief 语言切换完成信号。
+	 * @param[in] lang 切换后的新语言。
+	 */
+	void languageChanged(MainWindow::Language lang);
+
+  private:
+	/// @name 内部装配（仅构造与语言切换路径调用）
+	/// @{
+	void createPages();       ///< 创建五个页面控件并加入 TabWidget（仅构造时调用）。
+	void applyCarbonStyles(); ///< 应用容器级 CarbonUI 风格与工具栏动作（仅构造时调用一次）。
+	void connectSignals();    ///< 建立菜单动作与页面状态消息的信号连接。
+	void retranslateUi();     ///< 按当前语言覆写骨架文本并下发语言到各页面。
+	QString langText(const char* zh, const char* en) const; ///< 按当前语言取双语字符串。
+	/// @}
+
+	/// @name 界面成员
+	/// @{
+	Ui::MainWindow* ui;                            ///< 由 MainWindow.ui 生成的骨架控件集合。
+	Language lang_ = Language::Chinese;            ///< 当前界面语言，默认中文。
+	QLabel* statusLang_ = nullptr;                 ///< 状态栏常驻语言指示标签。
+	QLabel* statusVersion_ = nullptr;              ///< 状态栏常驻版本号标签。
+	ButtonPage* buttonPage_ = nullptr;             ///< 第 0 页：按钮测试页。
+	SelectionPage* selectionPage_ = nullptr;       ///< 第 1 页：选择与开关测试页。
+	InputPage* inputPage_ = nullptr;               ///< 第 2 页：输入测试页。
+	ListPage* listPage_ = nullptr;                 ///< 第 3 页：列表与折叠测试页。
+	TextOverflowPage* textOverflowPage_ = nullptr; ///< 第 4 页：文本溢出测试页。
+	                                               /// @}
 };

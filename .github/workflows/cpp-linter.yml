@@ -64,6 +64,12 @@ jobs:
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DCMAKE_PREFIX_PATH="${QT_ROOT_DIR:-$QT_CACHE_DIR/Qt/5.14.2/gcc_64}"
 
+      # clang-tidy 需要完整的可编译状态：uic/moc 生成头（ui_MainWindow.h 等）
+      # 必须真实存在于构建树，否则对 #include "ui_*.h" 报 clang-diagnostic-error。
+      - name: Build (generate uic/moc artifacts)
+        shell: bash
+        run: cmake --build build
+
       - uses: cpp-linter/cpp-linter-action@v2
         id: linter
         env:

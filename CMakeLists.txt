@@ -52,11 +52,23 @@ add_subdirectory(third_party/CarbonUI)
 # （TDD 约定：测试与实现同仓同构建，共享标准/编码/运行时库设置）。
 set(APPLIB_SOURCES
     src/MainWindow.cpp
+    src/GalleryPage.cpp
+    src/ButtonPage.cpp
+    src/SelectionPage.cpp
+    src/InputPage.cpp
+    src/ListPage.cpp
+    src/TextOverflowPage.cpp
     src/AppFont.cpp
 )
 
 set(APPLIB_HEADERS
     inc/MainWindow.h
+    inc/GalleryPage.h
+    inc/ButtonPage.h
+    inc/SelectionPage.h
+    inc/InputPage.h
+    inc/ListPage.h
+    inc/TextOverflowPage.h
     inc/AppFont.h
 )
 

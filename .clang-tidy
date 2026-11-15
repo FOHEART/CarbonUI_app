@@ -24,7 +24,12 @@ Checks: >
   -readability-uppercase-literal-suffix,
   -readability-math-missing-parentheses,
   -readability-trailing-comma,
-  -readability-function-cognitive-complexity
+  -readability-function-cognitive-complexity,
+  -readability-convert-member-functions-to-static
+
+# 说明：禁用 readability-convert-member-functions-to-static —— QtTest 用例
+# 必须是成员槽（moc 不可静态化），该检查对测试类是误报。
+# 注意：Checks 为 YAML 块标量，内部不能写 "#" 注释（会被当作内容）。
 
 # 只展开工程自有头文件的诊断；third_party / 生成代码不展开。
 HeaderFilterRegex: '^(src|inc|tests)/'
