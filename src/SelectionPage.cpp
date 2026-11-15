@@ -9,7 +9,9 @@
  * 控件树与布局沿用原 MainWindow.ui 中"选择与开关"Tab 的结构。自绘单选的
  * 文字由 CarbonUI 事件过滤器同步到内部标签，可直接 setText；自绘复选框
  * （指示灯居左形态）的文字被清空，这里只更新旁置标签；指示灯居右形态的
- * 文字由控件内部子标签承载，同样直接 setText。
+ * 文字由控件内部子标签承载，同样直接 setText。旁置标签可点击（eventFilter
+ * 转发为复选框 toggle），使两种形态交互一致。复选框分组内的形态测试按钮
+ * 会在两种形态间切换（销毁重建），retranslatePage 按当前形态分流覆写。
  *
  * 本源码基于 Mozilla Public License 2.0 发布：
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -21,6 +23,7 @@
 
 #include "CarbonUIClass.h"
 
+#include <QtCore/QEvent>
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QVBoxLayout>
 
@@ -39,6 +42,7 @@ const char* const kNameCheckB = "checkIndicatorB";
 const char* const kNameLabelCheckB = "labelCheckB";
 const char* const kNameCheckNative = "checkBoxNative";
 const char* const kNameCheckHint = "labelCheckHint";
+const char* const kNameBtnRightFormTest = "buttonRightFormTest";
 const char* const kNameGroupChecksRight = "groupBoxChecksRight";
 const char* const kNameCheckRightA = "checkIndicatorRightA";
 const char* const kNameCheckRightB = "checkIndicatorRightB";
@@ -107,27 +111,32 @@ void SelectionPage::buildUi() {
 	auto* checksLayout = new QVBoxLayout(groupBoxChecks_);
 	checksLayout->setSpacing(8);
 
-	auto* checkALayout = new QHBoxLayout;
+	checkRowLayoutA_ = new QHBoxLayout;
 	checkIndicatorA_ = new QCheckBox(groupBoxChecks_);
 	checkIndicatorA_->setObjectName(QLatin1String(kNameCheckA));
 	labelCheckA_ = new QLabel(groupBoxChecks_);
 	labelCheckA_->setObjectName(QLatin1String(kNameLabelCheckA));
-	checkALayout->addWidget(checkIndicatorA_);
-	checkALayout->addWidget(labelCheckA_);
-	checkALayout->addSpacerItem(
+	// 旁置标签可点击：与指示灯居右形态一致，点文字也能切换勾选状态
+	labelCheckA_->installEventFilter(this);
+	labelCheckA_->setCursor(Qt::PointingHandCursor);
+	checkRowLayoutA_->addWidget(checkIndicatorA_);
+	checkRowLayoutA_->addWidget(labelCheckA_);
+	checkRowLayoutA_->addSpacerItem(
 	    new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
-	checksLayout->addLayout(checkALayout);
+	checksLayout->addLayout(checkRowLayoutA_);
 
-	auto* checkBLayout = new QHBoxLayout;
+	checkRowLayoutB_ = new QHBoxLayout;
 	checkIndicatorB_ = new QCheckBox(groupBoxChecks_);
 	checkIndicatorB_->setObjectName(QLatin1String(kNameCheckB));
 	labelCheckB_ = new QLabel(groupBoxChecks_);
 	labelCheckB_->setObjectName(QLatin1String(kNameLabelCheckB));
-	checkBLayout->addWidget(checkIndicatorB_);
-	checkBLayout->addWidget(labelCheckB_);
-	checkBLayout->addSpacerItem(
+	labelCheckB_->installEventFilter(this);
+	labelCheckB_->setCursor(Qt::PointingHandCursor);
+	checkRowLayoutB_->addWidget(checkIndicatorB_);
+	checkRowLayoutB_->addWidget(labelCheckB_);
+	checkRowLayoutB_->addSpacerItem(
 	    new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
-	checksLayout->addLayout(checkBLayout);
+	checksLayout->addLayout(checkRowLayoutB_);
 
 	checkBoxNative_ = new QCheckBox(groupBoxChecks_);
 	checkBoxNative_->setObjectName(QLatin1String(kNameCheckNative));
@@ -136,6 +145,16 @@ void SelectionPage::buildUi() {
 	labelCheckHint_ = new QLabel(groupBoxChecks_);
 	labelCheckHint_->setObjectName(QLatin1String(kNameCheckHint));
 	checksLayout->addWidget(labelCheckHint_);
+
+	// 指示灯形态测试按钮：点击在居左/居右形态间切换（切换即销毁重建）
+	auto* testButtonLayout = new QHBoxLayout;
+	buttonRightFormTest_ = new QPushButton(groupBoxChecks_);
+	buttonRightFormTest_->setObjectName(QLatin1String(kNameBtnRightFormTest));
+	testButtonLayout->addWidget(buttonRightFormTest_);
+	testButtonLayout->addSpacerItem(
+	    new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
+	checksLayout->addLayout(testButtonLayout);
+	connect(buttonRightFormTest_, &QPushButton::clicked, this, [this] { toggleIndicatorForm(); });
 	pageLayout->addWidget(groupBoxChecks_);
 
 	// 复选框（指示灯居右）分组：文字在按钮内部左对齐，上下排列时圆点右对齐
@@ -198,6 +217,7 @@ void SelectionPage::applyStyles() {
 	CarbonUIClass::applyCheckStyle(checkIndicatorB_);
 	CarbonUIClass::applyCheckStyle(checkIndicatorRightA_, CarbonUIClass::Check_IndicatorRight);
 	CarbonUIClass::applyCheckStyle(checkIndicatorRightB_, CarbonUIClass::Check_IndicatorRight);
+	CarbonUIClass::applyButtonStyle(buttonRightFormTest_, CarbonUIClass::Shape_RoundAll);
 }
 
 /**
@@ -213,13 +233,23 @@ void SelectionPage::retranslatePage() {
 	    langText("CarbonUI 自绘圆角单选：文字居中显示在按钮内部。",
 		         "CarbonUI custom rounded radios: text is centered inside the button."));
 	groupBoxChecks_->setTitle(langText("复选框", "Check boxes"));
-	labelCheckA_->setText(langText("启用自绘指示灯", "Enable custom indicator"));
-	labelCheckB_->setText(langText("开机自动连接", "Auto-connect on startup"));
+	if (indicatorRightForm_) {
+		// 居右形态：文案由控件内部子标签承载，旁置标签隐藏
+		checkIndicatorA_->setText(langText("启用自绘指示灯", "Enable custom indicator"));
+		checkIndicatorB_->setText(langText("开机自动连接", "Auto-connect on startup"));
+	} else {
+		// 居左形态：文案由旁置标签承载
+		labelCheckA_->setText(langText("启用自绘指示灯", "Enable custom indicator"));
+		labelCheckB_->setText(langText("开机自动连接", "Auto-connect on startup"));
+	}
+	buttonRightFormTest_->setText(
+	    indicatorRightForm_ ? langText("恢复指示灯居左形态", "Restore indicator on the left")
+		                    : langText("测试指示灯居右形态", "Test indicator on the right"));
 	checkBoxNative_->setText(langText("原生复选框对照", "Native check box (reference)"));
 	labelCheckHint_->setText(
-	    langText("自绘指示灯复选框只显示 16x16 圆点，文字由旁置标签承载。",
-		         "Custom indicator check boxes show a 16x16 dot only; captions live in the "
-		         "sibling labels."));
+	    langText("自绘指示灯复选框只显示 16x16 圆点，点击文字同样可切换勾选状态。",
+		         "Custom indicator check boxes show a 16x16 dot only; clicking the caption "
+		         "toggles the state as well."));
 	groupBoxChecksRight_->setTitle(
 	    langText("复选框（指示灯居右）", "Check boxes (indicator on the right)"));
 	checkIndicatorRightA_->setText(langText("启用智慧指示灯", "Enable smart indicator"));
@@ -232,4 +262,71 @@ void SelectionPage::retranslatePage() {
 	    langText("长文本单选（观察是否溢出）", "Long-text radios (observe overflow)"));
 	radioButtonLongCn_->setText(longTextZh());
 	radioButtonLongEn_->setText(longTextEn());
+}
+
+/**
+ * @brief 指示灯形态测试按钮：在居左/居右形态间切换本分组两个自绘复选框。
+ *
+ * @details
+ * CarbonUI 的 applyCheckStyle 非幂等（重复调用会叠加子控件与布局），因此
+ * 切换即销毁重建：旧控件经 deleteLater 释放，新控件以相同 objectName 插回
+ * 原行布局首列；勾选状态予以保留。旁置文案标签仅在居左形态下显示，居右
+ * 形态下文案由控件内部子标签承载（retranslatePage 按形态分流覆写）。
+ */
+void SelectionPage::toggleIndicatorForm() {
+	const bool toRight = !indicatorRightForm_;
+	// 两个自绘复选框由 buildUi 创建，点击按钮时必然存在
+	const bool checkedA = checkIndicatorA_->isChecked();
+	const bool checkedB = checkIndicatorB_->isChecked();
+	const auto position =
+	    toRight ? CarbonUIClass::Check_IndicatorRight : CarbonUIClass::Check_IndicatorLeft;
+
+	// A 行：销毁旧控件，新控件以相同 objectName 插回行首并恢复勾选状态
+	checkRowLayoutA_->removeWidget(checkIndicatorA_);
+	checkIndicatorA_->deleteLater();
+	checkIndicatorA_ = new QCheckBox(groupBoxChecks_);
+	checkIndicatorA_->setObjectName(QLatin1String(kNameCheckA));
+	checkRowLayoutA_->insertWidget(0, checkIndicatorA_);
+	CarbonUIClass::applyCheckStyle(checkIndicatorA_, position);
+	checkIndicatorA_->setChecked(checkedA);
+
+	// B 行同理
+	checkRowLayoutB_->removeWidget(checkIndicatorB_);
+	checkIndicatorB_->deleteLater();
+	checkIndicatorB_ = new QCheckBox(groupBoxChecks_);
+	checkIndicatorB_->setObjectName(QLatin1String(kNameCheckB));
+	checkRowLayoutB_->insertWidget(0, checkIndicatorB_);
+	CarbonUIClass::applyCheckStyle(checkIndicatorB_, position);
+	checkIndicatorB_->setChecked(checkedB);
+
+	// 旁置标签只服务居左形态；居右形态下隐藏，避免与控件内子标签重复
+	labelCheckA_->setVisible(!toRight);
+	labelCheckB_->setVisible(!toRight);
+	indicatorRightForm_ = toRight;
+
+	retranslatePage();
+}
+
+/**
+ * @brief 事件过滤器：旁置文案标签被点击时切换对应复选框的勾选状态。
+ *
+ * @details
+ * 指示灯居左形态下，复选框本体只剩 16x16 的指示灯，点击命中区太小；
+ * 把文案标签的按下事件转发为复选框 toggle()，使两种形态交互一致
+ * （与指示灯居右形态"点文字即可切换"相同）。事件消费掉，不再下传。
+ */
+bool SelectionPage::eventFilter(QObject* watched, QEvent* event) {
+	if (event->type() == QEvent::MouseButtonPress) {
+		QCheckBox* target = nullptr;
+		if (watched == labelCheckA_) {
+			target = checkIndicatorA_;
+		} else if (watched == labelCheckB_) {
+			target = checkIndicatorB_;
+		}
+		if (target != nullptr) {
+			target->toggle();
+			return true;
+		}
+	}
+	return GalleryPage::eventFilter(watched, event);
 }

@@ -14,6 +14,10 @@
  * 由控件内部子标签承载，直接 setText 即可。控件 objectName 与原
  * MainWindow.ui 一致。
  *
+ * 「复选框」分组内另有指示灯形态测试按钮：点击后销毁并重建本分组的两个
+ * 自绘复选框，在指示灯居左/居右两种形态间切换（CarbonUI 的 applyCheckStyle
+ * 非幂等，切换即重建；勾选状态予以保留）。
+ *
  * 线程安全：仅允许在 GUI 主线程使用。
  */
 
@@ -22,9 +26,11 @@
 
 #include "GalleryPage.h"
 
+#include <QtWidgets/QBoxLayout>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QGroupBox>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QPushButton>
 #include <QtWidgets/QRadioButton>
 
 /**
@@ -32,7 +38,7 @@
  *
  * @details
  * 分区：单选按钮（独立 + 左/中/右三段式）→ 复选框（自绘指示灯 ×2 + 原生
- * 对照）→ 复选框（指示灯居右形态）→ 长文本单选（溢出观察）。
+ * 对照 + 形态测试按钮）→ 复选框（指示灯居右形态）→ 长文本单选（溢出观察）。
  */
 class SelectionPage : public GalleryPage {
 	Q_OBJECT
@@ -50,9 +56,24 @@ class SelectionPage : public GalleryPage {
 	 */
 	void retranslatePage() override;
 
+	/**
+	 * @brief 事件过滤器：把旁置文案标签的鼠标点击转发为对应复选框的勾选切换，
+	 *        使指示灯居左形态与居右形态的交互一致（点文字也能选中/取消）。
+	 * @param[in] watched 被过滤对象（labelCheckA_/labelCheckB_）。
+	 * @param[in] event 事件；仅处理 MouseButtonPress，其余放行。
+	 * @return 标签点击已消费返回 true，其余交回基类处理。
+	 */
+	bool eventFilter(QObject* watched, QEvent* event) override;
+
   private:
 	void buildUi();     ///< 构建控件树与布局（仅构造时调用）。
 	void applyStyles(); ///< 应用 CarbonUI 选择类风格（仅构造时调用）。
+
+	/**
+	 * @brief 指示灯形态测试按钮：销毁重建本分组两个自绘复选框，在
+	 *        指示灯居左/居右形态间切换（详见 SelectionPage.h 类说明）。
+	 */
+	void toggleIndicatorForm();
 
 	QGroupBox* groupBoxRadios_ = nullptr;     ///< "单选按钮"分组框。
 	QRadioButton* radioButtonSolo_ = nullptr; ///< 独立单选（objectName: radioButtonSolo）。
@@ -67,6 +88,11 @@ class SelectionPage : public GalleryPage {
 	QLabel* labelCheckB_ = nullptr;        ///< 复选框 B 旁置文案标签。
 	QCheckBox* checkBoxNative_ = nullptr;  ///< 原生复选框对照（objectName: checkBoxNative）。
 	QLabel* labelCheckHint_ = nullptr;     ///< 复选框说明文字。
+	QPushButton* buttonRightFormTest_ =
+	    nullptr; ///< 指示灯形态测试按钮（objectName: buttonRightFormTest）。
+	QBoxLayout* checkRowLayoutA_ = nullptr;    ///< 复选框 A 所在行布局（重建控件时定位插入点）。
+	QBoxLayout* checkRowLayoutB_ = nullptr;    ///< 复选框 B 所在行布局（重建控件时定位插入点）。
+	bool indicatorRightForm_ = false;          ///< 当前自绘复选框是否处于指示灯居右形态。
 	QGroupBox* groupBoxChecksRight_ = nullptr; ///< "复选框（指示灯居右）"分组框。
 	QCheckBox* checkIndicatorRightA_ =
 	    nullptr; ///< 指示灯居右复选框 A（objectName: checkIndicatorRightA）。
