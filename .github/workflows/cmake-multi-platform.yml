@@ -261,11 +261,13 @@ jobs:
     - name: Add runtime library paths (Windows only)
       # ctest 时的用例发现（PRE_TEST）会直接运行测试 exe，Qt DLL 与 CarbonUI
       # 运行库必须在 PATH 上，否则用例发现阶段就挂。
+      # 注意：Windows 上 CMAKE_PREFIX_PATH 是 MSYS 形式（/d/a/...），直接写进
+      # GITHUB_PATH 无法被 DLL 解析识别，必须用 cygpath -w 归一为 Windows 形式。
       if: matrix.os == 'windows-latest'
       shell: bash
       run: |
-        echo "${CMAKE_PREFIX_PATH}/bin" >> "$GITHUB_PATH"
-        echo "${{ github.workspace }}/build/third_party/CarbonUI/Release" >> "$GITHUB_PATH"
+        echo "$(cygpath -w "${Qt5_DIR}/../../../bin")" >> "$GITHUB_PATH"
+        echo "$(cygpath -w "${{ github.workspace }}/build/third_party/CarbonUI/Release")" >> "$GITHUB_PATH"
 
     - name: Add runtime library paths (Ubuntu only)
       if: matrix.os == 'ubuntu-latest'
