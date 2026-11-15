@@ -1,0 +1,81 @@
+# cpp-linter：PR 上只查改动行，clang-tidy 发现以"建议修改"发布（tidy-review）
+# 版本与本地（D:\autotools\clangTidy、pre-commit）统一 pin 在 LLVM 23。
+# 编译数据库需要完整 configure（含 Qt 与 submodule），因此复用主构建的依赖安装步骤。
+name: cpp-linter
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  cpp-linter:
+    runs-on: ubuntu-latest
+    env:
+      QT_CACHE_DIR: ${{ github.workspace }}/.qt
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.XSTYPES_PAT }}
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Install system dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libgl1-mesa-dev \
+            mesa-common-dev \
+            libfontconfig1-dev \
+            libfreetype6-dev \
+            libxkbcommon-x11-0 \
+            libx11-xcb1 \
+            libxcb-icccm4 \
+            libxcb-image0 \
+            libxcb-keysyms1 \
+            libxcb-randr0 \
+            libxcb-render-util0 \
+            libxcb-shape0 \
+            libxcb-sync1 \
+            libxcb-xfixes0 \
+            libxcb-xinerama0 \
+            libxcb-xkb1
+
+      - name: Install Qt 5.14.2
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '5.14.2'
+          host: 'linux'
+          target: 'desktop'
+          arch: 'gcc_64'
+          dir: ${{ env.QT_CACHE_DIR }}
+          setup-python: false
+          install-deps: true
+
+      - name: Configure CMake (export compile_commands.json)
+        shell: bash
+        run: |
+          cmake -B build -S . \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DCMAKE_PREFIX_PATH="${QT_ROOT_DIR:-$QT_CACHE_DIR/Qt/5.14.2/gcc_64}"
+
+      - uses: cpp-linter/cpp-linter-action@v2
+        id: linter
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          version: '23'
+          style: file
+          tidy-checks: ''
+          database: build
+          lines-changed-only: true
+          tidy-review: true
+
+      - name: Fail on lint errors
+        if: steps.linter.outputs.checks-failed > 0
+        run: exit 1

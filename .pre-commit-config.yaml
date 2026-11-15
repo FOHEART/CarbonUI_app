@@ -1,0 +1,21 @@
+# 提交门禁：每次 git commit 时对已暂存文件跑 clang-format / clang-tidy（LLVM 23）
+#
+# 启用（克隆后执行一次）：
+#   python -m pip install --user pre-commit
+#   pre-commit install
+#
+# 行为说明：
+#   - clang-format hook 会重写文件并使提交失败，重新暂存再提交即可
+#   - clang-tidy hook 在 build/ 等目录找 compile_commands.json（本工程可用
+#     scripts\lint.bat 生成 out\build\lint\compile_commands.json，或预先配置该树）
+#   - 严禁用 --no-verify 绕过 hooks（会让提交门禁形同虚设）
+#   - 本地已有 LLVM 23 工具链（D:\autotools\clangTidy，scripts\lint.bat 使用）；
+#     hooks 首次运行时会经 pip 自行安装同版本（23）的副本到其专属环境，互不影响
+repos:
+  - repo: https://github.com/cpp-linter/cpp-linter-hooks
+    rev: v1.8.1
+    hooks:
+      - id: clang-format
+        args: [--style=file, --version=23]
+      - id: clang-tidy
+        args: [--version=23]

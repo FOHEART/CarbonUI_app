@@ -5,6 +5,10 @@ project(CarbonUI_app LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 导出编译数据库供 clang-tidy / cpp-linter 使用（VS 生成器忽略该设置，
+# 代码检查统一走 scripts\lint.bat，其内部用 Ninja 生成 out/build/lint）
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # 源码统一 UTF-8（含中文注释/字面量）。目录属性只对"其后创建"的目标生效，
 # 因此必须放在任何 add_library/add_executable 之前，否则 MSVC 会报 C4566。
 if (MSVC)

@@ -1,0 +1,35 @@
+# clang-tidy 配置（P1 基线，沿用 clangTidy 技能实测的规则集）
+#
+# 目标：聚焦"真 bug"类检查（bugprone / clang-analyzer），保留 performance 与
+# modernize / readability 中的行为类检查；纯风格项由 .clang-format 负责，先禁用
+# 以免淹没重点。检查工具为 LLVM 23（本地 D:\autotools\clangTidy、CI cpp-linter-action、
+# pre-commit 三端同版本）。
+#
+# 执行口径：
+#   - AI 代理/日常开发：scripts/lint.bat（默认只查相对 origin/main 的改动行）
+#   - PR 门禁：cpp-linter-action（lines-changed-only）
+#   - 全量基线扫描：scripts/lint.bat all（报告 out/tidy/report.txt）
+Checks: >
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  modernize-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -modernize-use-trailing-return-type,
+  -modernize-use-nodiscard,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -readability-uppercase-literal-suffix,
+  -readability-math-missing-parentheses,
+  -readability-trailing-comma,
+  -readability-function-cognitive-complexity
+
+# 只展开工程自有头文件的诊断；third_party / 生成代码不展开。
+HeaderFilterRegex: '^(src|inc|tests)/'
+
+# 修复建议套用仓库 .clang-format 的风格。
+FormatStyle: file
+
+WarningsAsErrors: ''

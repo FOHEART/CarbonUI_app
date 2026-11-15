@@ -18,6 +18,12 @@
 | `scripts/ci/rerun_failed.bat` | 重跑失败 job（`-RunId id` 指定运行，`-DryRun` 只打印） |
 | `scripts/ci/pull_artifacts.bat` | 拉取 CI 产物（默认 out/ci-artifacts） |
 | `scripts/wsl/wsl.bat [sync/build/test/docs/verify]` | 本机 WSL 真 Linux 预验证（家目录副本内跑 POSIX 分支） |
+| `scripts/lint.bat [changed/all] [base]` | clang-format / clang-tidy 代码检查（LLVM 23；默认 changed 只查相对 origin/main 的已暂存改动行，all 为全量扫描，报告 out/tidy/report.txt） |
+| `.pre-commit-config.yaml` | 提交门禁：每次 commit 对已暂存文件跑 clang-format / clang-tidy（`pre-commit install` 启用；禁止 `--no-verify`） |
+| `.github/workflows/cpp-linter.yml` | PR 门禁：cpp-linter-action 只查 PR 改动行，tidy 发现以"建议修改"评论发布 |
+
+代码检查约定见 `AGENTS.md`；风格与规则配置在仓库根 `.clang-format` / `.clang-tidy`
+（本地 LLVM 23 工具位于 `D:\autotools\clangTidy`，可用 `CLANGTIDY_DIR` 覆盖）。
 
 环境变量：
 

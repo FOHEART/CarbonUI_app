@@ -1,0 +1,12 @@
+# clang-format 配置 —— LLVM 23 全链路统一（本地 scripts/lint.bat、pre-commit、cpp-linter-action 同版本）
+# 现有代码以 Tab 缩进为主，格式化只约束改动行/新增文件，存量代码不做一次性全量重排。
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForIndentation
+ColumnLimit: 100
+AlignAfterOpenBracket: Align
+PointerAlignment: Left
+AllowShortFunctionsOnASingleLine: Inline
+# include 顺序影响 moc/uic 与平台头展开，保持作者书写顺序
+SortIncludes: Never
