@@ -9,8 +9,10 @@
  * @details
  * 主界面第 1 个 Tab 的页面控件。构造时完成控件装配、CarbonUI 选择类风格
  * 应用（自绘圆角单选 + 自绘指示灯复选框，均非幂等，仅此一次）；文本覆写
- * 由 @ref retranslatePage 按当前语言完成。自绘复选框的 text() 被 CarbonUI
- * 清空，文案由旁置 QLabel 承载。控件 objectName 与原 MainWindow.ui 一致。
+ * 由 @ref retranslatePage 按当前语言完成。自绘复选框（指示灯居左形态）的
+ * text() 被 CarbonUI 清空，文案由旁置 QLabel 承载；指示灯居右形态的文案
+ * 由控件内部子标签承载，直接 setText 即可。控件 objectName 与原
+ * MainWindow.ui 一致。
  *
  * 线程安全：仅允许在 GUI 主线程使用。
  */
@@ -30,7 +32,7 @@
  *
  * @details
  * 分区：单选按钮（独立 + 左/中/右三段式）→ 复选框（自绘指示灯 ×2 + 原生
- * 对照）→ 长文本单选（溢出观察）。
+ * 对照）→ 复选框（指示灯居右形态）→ 长文本单选（溢出观察）。
  */
 class SelectionPage : public GalleryPage {
 	Q_OBJECT
@@ -65,6 +67,12 @@ class SelectionPage : public GalleryPage {
 	QLabel* labelCheckB_ = nullptr;        ///< 复选框 B 旁置文案标签。
 	QCheckBox* checkBoxNative_ = nullptr;  ///< 原生复选框对照（objectName: checkBoxNative）。
 	QLabel* labelCheckHint_ = nullptr;     ///< 复选框说明文字。
+	QGroupBox* groupBoxChecksRight_ = nullptr; ///< "复选框（指示灯居右）"分组框。
+	QCheckBox* checkIndicatorRightA_ =
+	    nullptr; ///< 指示灯居右复选框 A（objectName: checkIndicatorRightA）。
+	QCheckBox* checkIndicatorRightB_ =
+	    nullptr; ///< 指示灯居右复选框 B（objectName: checkIndicatorRightB）。
+	QLabel* labelCheckRightHint_ = nullptr;     ///< 指示灯居右说明文字。
 	QGroupBox* groupBoxRadioLong_ = nullptr;    ///< 长文本单选分组框。
 	QRadioButton* radioButtonLongCn_ = nullptr; ///< 长文本单选（中文样例）。
 	QRadioButton* radioButtonLongEn_ = nullptr; ///< 长文本单选（英文样例）。

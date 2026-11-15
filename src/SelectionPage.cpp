@@ -7,8 +7,9 @@
  *
  * @details
  * 控件树与布局沿用原 MainWindow.ui 中"选择与开关"Tab 的结构。自绘单选的
- * 文字由 CarbonUI 事件过滤器同步到内部标签，可直接 setText；自绘复选框的
- * 文字被清空，这里只更新旁置标签。
+ * 文字由 CarbonUI 事件过滤器同步到内部标签，可直接 setText；自绘复选框
+ * （指示灯居左形态）的文字被清空，这里只更新旁置标签；指示灯居右形态的
+ * 文字由控件内部子标签承载，同样直接 setText。
  *
  * 本源码基于 Mozilla Public License 2.0 发布：
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -38,6 +39,10 @@ const char* const kNameCheckB = "checkIndicatorB";
 const char* const kNameLabelCheckB = "labelCheckB";
 const char* const kNameCheckNative = "checkBoxNative";
 const char* const kNameCheckHint = "labelCheckHint";
+const char* const kNameGroupChecksRight = "groupBoxChecksRight";
+const char* const kNameCheckRightA = "checkIndicatorRightA";
+const char* const kNameCheckRightB = "checkIndicatorRightB";
+const char* const kNameCheckRightHint = "labelCheckRightHint";
 const char* const kNameGroupRadioLong = "groupBoxRadioLong";
 const char* const kNameRadioLongCn = "radioButtonLongCn";
 const char* const kNameRadioLongEn = "radioButtonLongEn";
@@ -133,6 +138,25 @@ void SelectionPage::buildUi() {
 	checksLayout->addWidget(labelCheckHint_);
 	pageLayout->addWidget(groupBoxChecks_);
 
+	// 复选框（指示灯居右）分组：文字在按钮内部左对齐，上下排列时圆点右对齐
+	groupBoxChecksRight_ = new QGroupBox(this);
+	groupBoxChecksRight_->setObjectName(QLatin1String(kNameGroupChecksRight));
+	auto* checksRightLayout = new QVBoxLayout(groupBoxChecksRight_);
+	checksRightLayout->setSpacing(8);
+
+	checkIndicatorRightA_ = new QCheckBox(groupBoxChecksRight_);
+	checkIndicatorRightA_->setObjectName(QLatin1String(kNameCheckRightA));
+	checksRightLayout->addWidget(checkIndicatorRightA_);
+
+	checkIndicatorRightB_ = new QCheckBox(groupBoxChecksRight_);
+	checkIndicatorRightB_->setObjectName(QLatin1String(kNameCheckRightB));
+	checksRightLayout->addWidget(checkIndicatorRightB_);
+
+	labelCheckRightHint_ = new QLabel(groupBoxChecksRight_);
+	labelCheckRightHint_->setObjectName(QLatin1String(kNameCheckRightHint));
+	checksRightLayout->addWidget(labelCheckRightHint_);
+	pageLayout->addWidget(groupBoxChecksRight_);
+
 	// 长文本单选分组：溢出观察样例
 	groupBoxRadioLong_ = new QGroupBox(this);
 	groupBoxRadioLong_->setObjectName(QLatin1String(kNameGroupRadioLong));
@@ -172,6 +196,8 @@ void SelectionPage::applyStyles() {
 	CarbonUIClass::applyRadioStyle(radioButtonLongEn_, CarbonUIClass::Radio_FourRound, 120);
 	CarbonUIClass::applyCheckStyle(checkIndicatorA_);
 	CarbonUIClass::applyCheckStyle(checkIndicatorB_);
+	CarbonUIClass::applyCheckStyle(checkIndicatorRightA_, CarbonUIClass::Check_IndicatorRight);
+	CarbonUIClass::applyCheckStyle(checkIndicatorRightB_, CarbonUIClass::Check_IndicatorRight);
 }
 
 /**
@@ -194,6 +220,14 @@ void SelectionPage::retranslatePage() {
 	    langText("自绘指示灯复选框只显示 16x16 圆点，文字由旁置标签承载。",
 		         "Custom indicator check boxes show a 16x16 dot only; captions live in the "
 		         "sibling labels."));
+	groupBoxChecksRight_->setTitle(
+	    langText("复选框（指示灯居右）", "Check boxes (indicator on the right)"));
+	checkIndicatorRightA_->setText(langText("启用智慧指示灯", "Enable smart indicator"));
+	checkIndicatorRightB_->setText(langText("记住窗口位置", "Remember window position"));
+	labelCheckRightHint_->setText(
+	    langText("指示灯居右形态：文字在按钮内部左对齐，多项上下排列时圆点右对齐。",
+		         "Right-side indicator variant: captions are left-aligned inside the button; "
+		         "stacked check boxes align their dots on the right."));
 	groupBoxRadioLong_->setTitle(
 	    langText("长文本单选（观察是否溢出）", "Long-text radios (observe overflow)"));
 	radioButtonLongCn_->setText(longTextZh());
