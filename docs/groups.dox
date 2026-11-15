@@ -1,0 +1,15 @@
+/**
+ * @defgroup carbonui_app_core 应用核心库
+ * @brief 主窗口装配与可测纯逻辑模块（appcore 命名空间），无平台 API 依赖，可离屏测试。
+ * @{
+ */
+
+/** @} */ // end of carbonui_app_core
+
+/**
+ * @defgroup carbonui_app_tests 测试套件
+ * @brief GoogleTest 单元测试（tests/unit）与 QtTest 界面测试（tests/ui）。
+ * @{
+ */
+
+/** @} */ // end of carbonui_app_tests

@@ -1,0 +1,49 @@
+# Doxyfile for CarbonUI_app
+# 按规范用 doxygen -g 生成的模板裁剪而来（关键项见《代码注释规范_Doxygen.md》第七章）。
+# 验收：本工程执行 doxygen Doxyfile 必须零告警（doxygen_warnings.log 为 0 字节）。
+
+# ---- 项目信息 ----
+PROJECT_NAME           = "CarbonUI_app"
+PROJECT_BRIEF          = "基于 CarbonUI 组件库的 Qt5 桌面应用示例"
+PROJECT_NUMBER         = "1.0.0"
+OUTPUT_DIRECTORY       = docs
+OUTPUT_LANGUAGE        = Chinese
+INPUT_ENCODING         = UTF-8
+
+# ---- 输入 ----
+# 只收代码目录与根级源文件；third_party/build/output 一律排除
+INPUT                  = core tests main.cpp MainWindow.h MainWindow.cpp docs/groups.dox README.md
+FILE_PATTERNS          = *.h *.cpp *.dox *.md
+RECURSIVE              = YES
+EXCLUDE                = build third_party output docs/html
+USE_MDFILE_AS_MAINPAGE = README.md
+
+# ---- 提取策略 ----
+EXTRACT_ALL            = NO
+EXTRACT_STATIC         = YES
+EXTRACT_PRIVATE        = YES
+HIDE_UNDOC_MEMBERS     = NO
+SOURCE_BROWSER         = YES
+QT_AUTOBRIEF           = YES
+
+# ---- HTML 输出 ----
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+HTML_COLORSTYLE        = TOGGLE
+GENERATE_TREEVIEW      = YES
+SEARCHENGINE           = YES
+GENERATE_LATEX         = NO
+USE_MATHJAX            = NO
+
+# ---- 告警（规范落地的关键）----
+WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_DOC_ERROR      = YES
+WARN_NO_PARAMDOC       = YES
+WARN_AS_ERROR          = YES
+WARN_LOGFILE           = doxygen_warnings.log
+
+# ---- 别名（团队统一字段）----
+# 用例注释五字段中的 @expected / @test / @priority 不是内置命令，用别名展开为普通段落标题
+ALIASES                = expected="\par 预期结果: " \
+                         test="\par 用例\b " \
+                         priority="\par 优先级: "

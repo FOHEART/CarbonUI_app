@@ -1,7 +1,8 @@
 ﻿cmake_minimum_required(VERSION 3.16)
 project(CarbonUI_app LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+# GoogleTest 1.14 起要求 C++14；Qt 5.15 完全兼容
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(cmake/qt.cmake)
@@ -22,32 +23,59 @@ foreach(_qt_prefix_var QT_DIR QTDIR)
     endif()
 endforeach()
 
-find_package(Qt5 CONFIG REQUIRED COMPONENTS Core Gui Widgets)
+find_package(Qt5 CONFIG REQUIRED COMPONENTS Core Gui Widgets Test)
 set(QT_VERSION_MAJOR 5)
 
 qt_standard_project_setup()
 
 
-set(PROJECT_SOURCES
-    main.cpp
+# ########################  3rd party dependencies  #########################
+# CarbonUI 以 git submodule 形式引入（third_party/CarbonUI），直接 add_subdirectory。
+set(BUILD_CARBONUI_SHARED OFF CACHE BOOL "Build CarbonUI as shared library" FORCE)
+add_subdirectory(third_party/CarbonUI)
+
+# ########################  应用库（可测核心）  ##############################
+# 主窗口 + 纯逻辑模块编成静态库，供可执行文件与测试目标共享同一套编译选项
+# （TDD 约定：测试与实现同仓同构建，共享标准/编码/运行时库设置）。
+set(APPLIB_SOURCES
     MainWindow.cpp
+    core/AppFont.cpp
 )
 
-# Put Qt .ui files in a separate variable so IDEs show them under a distinct category
-set(PROJECT_UI
+set(APPLIB_HEADERS
+    MainWindow.h
+    core/AppFont.h
+)
+
+set(APPLIB_UI
     MainWindow.ui
 )
 
-# Put header files in a separate variable so IDEs show them under a distinct category
-set(PROJECT_HEADERS
-    MainWindow.h
-)
-
-set(RESOURCES_RCC
+set(APPLIB_RCC
     Resource.qrc
 )
 
-qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS} ${PROJECT_UI} ${RESOURCES_RCC})
+add_library(applib STATIC ${APPLIB_SOURCES} ${APPLIB_HEADERS} ${APPLIB_UI} ${APPLIB_RCC})
+target_include_directories(applib
+    PUBLIC
+        "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/core"
+        "${CMAKE_CURRENT_BINARY_DIR}"
+)
+target_link_libraries(applib
+    PUBLIC
+        Qt${QT_VERSION_MAJOR}::Core
+        Qt${QT_VERSION_MAJOR}::Gui
+        Qt${QT_VERSION_MAJOR}::Widgets
+        CarbonUI
+)
+
+# ########################  主程序  ##############################
+set(PROJECT_SOURCES
+    main.cpp
+)
+
+qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
 
 set_target_properties(${PROJECT_NAME}    PROPERTIES        WIN32_EXECUTABLE TRUE)
 
@@ -66,43 +94,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 )
 
 target_link_libraries(${PROJECT_NAME}
-    PUBLIC
-        Qt${QT_VERSION_MAJOR}::Core
-        Qt${QT_VERSION_MAJOR}::Gui
-        Qt${QT_VERSION_MAJOR}::Widgets
+    PRIVATE
+        applib
+        CarbonUI
 )
-
-# Ensure source files are interpreted as UTF-8 by the compiler
-# - MSVC: use /utf-8
-# - GCC/Clang: use -finput-charset and -fexec-charset
-if (MSVC)
-  target_compile_options(${PROJECT_NAME} PRIVATE /utf-8)
-else()
-  target_compile_options(${PROJECT_NAME} PRIVATE -finput-charset=UTF-8 -fexec-charset=UTF-8)
-endif()
-
-# Option to control whether CarbonUI is built/used as shared library
-option(BUILD_CARBONUI_SHARED "Build CarbonUI as shared library" OFF)
-
-# Set BUILD_SHARED_LIBS according to BUILD_CARBONUI_SHARED so CPM/FetchContent will build CarbonUI appropriately
-# Note: this sets the cache variable which may affect other projects added after this point
-if(BUILD_CARBONUI_SHARED)
-    set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared libraries" FORCE)
-else()
-    set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libraries" FORCE)
-endif()
-
-# ########################  3rd party dependencies  #########################
-include(FetchContent)
-include(cmake/CPM.cmake)
-
-CPMAddPackage(
-    NAME CarbonUI
-    GITHUB_REPOSITORY FOHEART/CarbonUI
-    GIT_TAG main)
-
-# Link the CarbonUI target provided by CPM to the project executable
-target_link_libraries(${PROJECT_NAME} PRIVATE CarbonUI)
 
 # If CarbonUI is a shared/module library, copy its runtime file to the executable folder after build
 if (TARGET CarbonUI)
@@ -131,6 +126,15 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
 # Function `run_windeployqt` is defined in cmake/qt.cmake and is a no-op on non-Windows platforms.
 run_windeployqt(${PROJECT_NAME})
 
+# Ensure source files are interpreted as UTF-8 by the compiler
+# - MSVC: use /utf-8
+# - GCC/Clang: use -finput-charset and -fexec-charset
+if (MSVC)
+  add_compile_options(/utf-8)
+else()
+  add_compile_options(-finput-charset=UTF-8 -fexec-charset=UTF-8)
+endif()
+
 # ---------------- CPack packaging ----------------
 # Use a separate cmake/cpack.cmake to setup packaging cmd: cpack -G ZIP
 include(cmake/cpack.cmake)
@@ -138,3 +142,61 @@ include(cmake/cpack.cmake)
 # Allow callers to override CPACK_PACKAGE_VERSION and CPACK_PACKAGE_CONTACT before calling
 setup_cpack_for_target(${PROJECT_NAME} "${OUTPUT_DIR}")
 
+# ########################  测试（GoogleTest + QtTest）  ######################
+enable_testing()
+
+option(USE_SYSTEM_GTEST "Use installed GoogleTest" OFF)
+set(GTEST_REPO "https://github.com/google/googletest.git" CACHE STRING "")
+set(GTEST_TAG  "v1.14.0" CACHE STRING "")
+
+if(USE_SYSTEM_GTEST)
+    find_package(GTest 1.11 REQUIRED)
+    set(GTEST_TARGET GTest::gtest)
+else()
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)   # MSVC：与主工程同为 /MD
+    set(INSTALL_GTEST OFF        CACHE BOOL "" FORCE)
+    set(BUILD_GMOCK OFF          CACHE BOOL "" FORCE)
+
+    include(FetchContent)
+    FetchContent_Declare(googletest
+        GIT_REPOSITORY "${GTEST_REPO}"
+        GIT_TAG        "${GTEST_TAG}"
+        GIT_SHALLOW    TRUE
+        GIT_PROGRESS   TRUE)
+    FetchContent_MakeAvailable(googletest)
+    set(GTEST_TARGET GTest::gtest)
+endif()
+
+include(GoogleTest)
+
+# 单元测试：纯逻辑层（AppFont），GoogleTest + 自定义 main（先 InitGoogleTest 再建 QApplication）
+add_executable(app_unit_tests tests/unit/appfont_test.cpp)
+target_link_libraries(app_unit_tests PRIVATE applib ${GTEST_TARGET})
+target_compile_definitions(app_unit_tests PRIVATE
+    CARBONUI_APP_TEST_FONT="${CMAKE_SOURCE_DIR}/fonts/HarmonyOS_Sans_SC_Bold.ttf")
+gtest_discover_tests(app_unit_tests
+    TEST_PREFIX "Unit."
+    PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120
+    DISCOVERY_MODE PRE_TEST)
+
+# 界面测试：MainWindow 冒烟（QtTest），离屏运行、只断言行为不做像素比对
+add_executable(app_ui_tests tests/ui/mainwindow_test.cpp)
+target_link_libraries(app_ui_tests PRIVATE applib Qt${QT_VERSION_MAJOR}::Test)
+add_test(NAME Ui.MainWindow COMMAND app_ui_tests)
+set_tests_properties(Ui.MainWindow PROPERTIES
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen" TIMEOUT 120)
+
+# ---------------- Doxygen 文档（可选目标：cmake --build . --target docs） ----------------
+find_program(DOXYGEN_EXECUTABLE doxygen
+    HINTS "D:/autotools/doxygen-1.11.0"
+    "$ENV{DOXYGEN_HOME}")
+if(DOXYGEN_EXECUTABLE)
+    message(STATUS "doxygen found: ${DOXYGEN_EXECUTABLE}")
+    add_custom_target(docs
+        COMMAND "${DOXYGEN_EXECUTABLE}" Doxyfile
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        COMMENT "Generating API documentation with Doxygen"
+        VERBATIM)
+else()
+    message(STATUS "doxygen not found, 'docs' target disabled (set DOXYGEN_HOME or install Doxygen)")
+endif()
