@@ -6,9 +6,10 @@
  * @version 1.0.0
  *
  * @details
- * 页面只有一个分组：说明文字 + 打开按钮。对话框本体由 CarbonUI 子库的
- * CarbonUIDialog 负责（无边框圆角面板 + 标题条 + 键值行），本页只提供
- * 演示数据；数据按当前语言取标签、取值保持产品化的英文原样。
+ * 页面只有一个分组：说明文字 + 四个打开按钮（无窗口按钮 / 仅最小化 / 仅最大化 /
+ * 最小化 + 最大化）。对话框本体由 CarbonUI 子库的 CarbonUIDialog 负责（无边框
+ * 圆角面板 + 标题条 + 键值行 + 窗口按钮），本页只提供演示数据与按钮组合；数据
+ * 按当前语言取标签、取值保持产品化的英文原样。
  *
  * 本源码基于 Mozilla Public License 2.0 发布：
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -29,6 +30,9 @@ namespace {
 const char* const kNameGroupDialogs = "groupBoxDialogs";
 const char* const kNameDialogHint = "labelDialogHint";
 const char* const kNameOpenDialog = "pushButtonOpenDialog";
+const char* const kNameOpenDialogMinimize = "pushButtonOpenDialogMinimize";
+const char* const kNameOpenDialogMaximize = "pushButtonOpenDialogMaximize";
+const char* const kNameOpenDialogBoth = "pushButtonOpenDialogBoth";
 
 /// 演示用的修订号（与 CarbonUI 产品线 About 对话框一致的长哈希）。
 const char* const kRevision = "2109c6b5729501538b788d424a783067a175beca";
@@ -50,7 +54,7 @@ DialogPage::DialogPage(QWidget* parent) : GalleryPage(parent) {
 }
 
 /**
- * @brief 构建控件树与布局：一个"对话框"分组（说明 + 按钮）。
+ * @brief 构建控件树与布局：一个"对话框"分组（说明 + 四个打开按钮）。
  */
 void DialogPage::buildUi() {
 	auto* pageLayout = new QVBoxLayout(this);
@@ -67,10 +71,25 @@ void DialogPage::buildUi() {
 	labelDialogHint_->setWordWrap(true);
 	groupLayout->addWidget(labelDialogHint_);
 
+	// 一行四个按钮：无窗口按钮 / 仅最小化 / 仅最大化 / 最小化 + 最大化
 	auto* buttonLayout = new QHBoxLayout;
+	buttonLayout->setSpacing(8);
 	pushButtonOpenDialog_ = new QPushButton(groupBoxDialogs_);
 	pushButtonOpenDialog_->setObjectName(QLatin1String(kNameOpenDialog));
 	buttonLayout->addWidget(pushButtonOpenDialog_);
+
+	pushButtonOpenDialogMinimize_ = new QPushButton(groupBoxDialogs_);
+	pushButtonOpenDialogMinimize_->setObjectName(QLatin1String(kNameOpenDialogMinimize));
+	buttonLayout->addWidget(pushButtonOpenDialogMinimize_);
+
+	pushButtonOpenDialogMaximize_ = new QPushButton(groupBoxDialogs_);
+	pushButtonOpenDialogMaximize_->setObjectName(QLatin1String(kNameOpenDialogMaximize));
+	buttonLayout->addWidget(pushButtonOpenDialogMaximize_);
+
+	pushButtonOpenDialogBoth_ = new QPushButton(groupBoxDialogs_);
+	pushButtonOpenDialogBoth_->setObjectName(QLatin1String(kNameOpenDialogBoth));
+	buttonLayout->addWidget(pushButtonOpenDialogBoth_);
+
 	buttonLayout->addSpacerItem(
 	    new QSpacerItem(40, 20, QSizePolicy::Expanding, QSizePolicy::Minimum));
 	groupLayout->addLayout(buttonLayout);
@@ -79,33 +98,66 @@ void DialogPage::buildUi() {
 	pageLayout->addSpacerItem(
 	    new QSpacerItem(20, 40, QSizePolicy::Minimum, QSizePolicy::Expanding));
 
-	// 点按钮弹出模态对话框；对话框自身是堆对象，exec 返回后释放
-	connect(pushButtonOpenDialog_, &QPushButton::clicked, this, [this] {
-		QDialog* dialog = createTestDialog(this);
-		dialog->exec();
-		dialog->deleteLater();
-	});
+	// 四个按钮只差"显示哪个窗口按钮"；对话框是堆对象，exec 返回后释放
+	connect(pushButtonOpenDialog_, &QPushButton::clicked, this,
+	        [this] { openDialog(false, false); });
+	connect(pushButtonOpenDialogMinimize_, &QPushButton::clicked, this,
+	        [this] { openDialog(true, false); });
+	connect(pushButtonOpenDialogMaximize_, &QPushButton::clicked, this,
+	        [this] { openDialog(false, true); });
+	connect(pushButtonOpenDialogBoth_, &QPushButton::clicked, this,
+	        [this] { openDialog(true, true); });
 }
 
 /**
- * @brief 应用 CarbonUI 按钮风格：打开按钮用四角圆角主色样式。
+ * @brief 应用 CarbonUI 按钮风格：四个打开按钮统一主色四角圆角样式。
  */
 void DialogPage::applyStyles() {
 	CarbonUIQPushButton::applyStyle(pushButtonOpenDialog_, CarbonUIQPushButton::Shape_RoundAll);
+	CarbonUIQPushButton::applyStyle(pushButtonOpenDialogMinimize_,
+	                                CarbonUIQPushButton::Shape_RoundAll);
+	CarbonUIQPushButton::applyStyle(pushButtonOpenDialogMaximize_,
+	                                CarbonUIQPushButton::Shape_RoundAll);
+	CarbonUIQPushButton::applyStyle(pushButtonOpenDialogBoth_, CarbonUIQPushButton::Shape_RoundAll);
+}
+
+/**
+ * @brief 以模态方式弹出「测试」对话框，返回后释放（详见 DialogPage.h）。
+ * @param[in] minimize true 显示最小化按钮。
+ * @param[in] maximize true 显示最大化按钮。
+ */
+void DialogPage::openDialog(bool minimize, bool maximize) {
+	QDialog* dialog = createTestDialog(this, minimize, maximize);
+	dialog->exec();
+	dialog->deleteLater();
 }
 
 /**
  * @brief 构造「测试」对话框（详见 DialogPage.h）。
  * @param[in] parent 对话框父窗口，可为 NULL。
- * @return 新建的 CarbonUIDialog，四行信息已填充。
+ * @return 新建的 CarbonUIDialog，四行信息已填充、两个窗口按钮均隐藏。
  */
 QDialog* DialogPage::createTestDialog(QWidget* parent) const {
+	return createTestDialog(parent, false, false);
+}
+
+/**
+ * @brief 构造「测试」对话框并分别开关窗口按钮（详见 DialogPage.h）。
+ * @param[in] parent   对话框父窗口，可为 NULL。
+ * @param[in] minimize true 显示最小化按钮。
+ * @param[in] maximize true 显示最大化按钮。
+ * @return 新建的 CarbonUIDialog，四行信息已填充。
+ */
+QDialog* DialogPage::createTestDialog(QWidget* parent, bool minimize, bool maximize) const {
 	auto* dialog = new CarbonUIDialog(langText("测试", "Test dialog"), parent);
 	dialog->addInfoRow(langText("应用修订号", "Application revision number"),
 	                   QLatin1String(kRevision));
 	dialog->addInfoRow(langText("应用构建时间", "Application date"), QLatin1String(kBuildDate));
 	dialog->addInfoRow(langText("程序版本", "Program version"), QLatin1String(kProgramVersion));
 	dialog->addInfoRow(langText("许可证", "License"), QLatin1String(kLicense));
+	// 最小化 / 最大化按钮按需显示，点击即执行真实的窗口操作
+	dialog->setMinimizeButtonVisible(minimize);
+	dialog->setMaximizeButtonVisible(maximize);
 	return dialog;
 }
 
@@ -115,9 +167,15 @@ QDialog* DialogPage::createTestDialog(QWidget* parent) const {
 void DialogPage::retranslatePage() {
 	groupBoxDialogs_->setTitle(langText("对话框", "Dialogs"));
 	labelDialogHint_->setText(langText(
-	    "CarbonUI 深色对话框：无系统边框、圆角面板、黑色标题条与键值行正文。",
+	    "CarbonUI 深色对话框：无系统边框、圆角面板、黑色标题条与键值行正文。标题条的"
+	    "最小化与最大化按钮可按需显示，点击即生效（最小化到任务栏、最大化铺满并切换"
+	    "为还原形）。",
 	    "CarbonUI dark dialog: frameless rounded panel with a black title bar and key/value "
-	    "rows."));
+	    "rows. The title-bar minimize and maximize buttons can be shown on demand and they "
+	    "really work (minimize to the task bar, maximize to fill and toggle back)."));
 	pushButtonOpenDialog_->setText(
 	    langText("打开「测试」对话框", "Open the \"Test dialog\" dialog"));
+	pushButtonOpenDialogMinimize_->setText(langText("仅最小化", "Minimize only"));
+	pushButtonOpenDialogMaximize_->setText(langText("仅最大化", "Maximize only"));
+	pushButtonOpenDialogBoth_->setText(langText("最小化 + 最大化", "Minimize + maximize"));
 }

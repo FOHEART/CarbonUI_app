@@ -212,6 +212,151 @@ class MainWindowTest : public QObject {
 	}
 
 	/**
+	 * @test   MainWindowUiTest.DialogPageWindowButtonVariants
+	 * @brief  行为断言：对话框页四个按钮能分别弹出「无 / 仅最小化 / 仅最大化 / 两者」。
+	 * @details 目的：锁住 createTestDialog 的两个开关确实映射到 CarbonUIDialog 的
+	 *          窗口按钮可见性且互不影响，同时验证最大化按钮不是摆设（点击后窗口
+	 *          进入最大化、再点回到常规）。不点页面按钮（exec 会阻塞），直接调用
+	 *          工厂函数检查按钮隐藏状态。
+	 * @expected 四个打开按钮都能按 objectName 找到；不带开关的对话框两个按钮都隐
+	 *           藏；仅最小化 → 最小化显示/最大化隐藏；仅最大化 → 反之；两者 → 都
+	 *           显示；最大化按钮点击后 isMaximized() 为真、再点回假。
+	 * @priority P1
+	 */
+	void dialogPageWindowButtonVariants() {
+		MainWindow window; // Arrange
+		window.show();
+
+		auto* page = window.findChild<DialogPage*>();
+		QVERIFY(page != nullptr);
+		QVERIFY(window.findChild<QPushButton*>(QStringLiteral("pushButtonOpenDialogMinimize")) !=
+		        nullptr);
+		QVERIFY(window.findChild<QPushButton*>(QStringLiteral("pushButtonOpenDialogMaximize")) !=
+		        nullptr);
+		QVERIFY(window.findChild<QPushButton*>(QStringLiteral("pushButtonOpenDialogBoth")) !=
+		        nullptr);
+		if (page == nullptr) {
+			return; // 兜底：显式返回帮助静态分析器确认解引用安全
+		}
+
+		// 窗口按钮是否显示：隐藏状态即可判定，无需 show()
+		const auto shown = [](QDialog* dialog, const QString& name) {
+			auto* button = dialog->findChild<QPushButton*>(name);
+			return button != nullptr && !button->isHidden();
+		};
+
+		// Act + Assert：四种组合逐一看窗口按钮
+		QDialog* plain = page->createTestDialog(nullptr);
+		QVERIFY(!shown(plain, QStringLiteral("CarbonUIDialogMinimize")));
+		QVERIFY(!shown(plain, QStringLiteral("CarbonUIDialogMaximize")));
+		delete plain;
+
+		QDialog* minimizeOnly = page->createTestDialog(nullptr, true, false);
+		QVERIFY(shown(minimizeOnly, QStringLiteral("CarbonUIDialogMinimize")));
+		QVERIFY(!shown(minimizeOnly, QStringLiteral("CarbonUIDialogMaximize")));
+		delete minimizeOnly;
+
+		QDialog* maximizeOnly = page->createTestDialog(nullptr, false, true);
+		QVERIFY(!shown(maximizeOnly, QStringLiteral("CarbonUIDialogMinimize")));
+		QVERIFY(shown(maximizeOnly, QStringLiteral("CarbonUIDialogMaximize")));
+		delete maximizeOnly;
+
+		QDialog* both = page->createTestDialog(nullptr, true, true);
+		QVERIFY(shown(both, QStringLiteral("CarbonUIDialogMinimize")));
+		QVERIFY(shown(both, QStringLiteral("CarbonUIDialogMaximize")));
+
+		// 最大化按钮必须是真功能：切换窗口状态，不只是画个字形
+		auto* maximizeButton =
+		    both->findChild<QPushButton*>(QStringLiteral("CarbonUIDialogMaximize"));
+		QVERIFY(maximizeButton != nullptr);
+		if (maximizeButton != nullptr) {
+			both->show();
+			maximizeButton->click();
+			QVERIFY(both->isMaximized());
+			maximizeButton->click();
+			QVERIFY(!both->isMaximized());
+		}
+		delete both;
+	}
+
+	/**
+	 * @test   MainWindowUiTest.HelpMenuAboutDialogs
+	 * @brief  行为断言：帮助菜单的「关于」「关于 Qt」都接到 CarbonUI 深色对话框。
+	 * @details 目的：锁住"帮助菜单不是空壳"，且两个对话框都用 CarbonUI 风格
+	 *          （而非系统浅色 QMessageBox），同时覆盖中英文重翻译。不点菜单项
+	 *          （exec 会阻塞），直接调用 createAboutDialog / createAboutQtDialog
+	 *          检查标题与信息行。
+	 * @expected actionAbout / actionAboutQt 存在且中文文案为「关于」「关于 Qt」；
+	 *           关于框标题「关于」、五行、首行含 1.0.0；关于 Qt 框标题「关于 Qt」、
+	 *           四行、首行含运行时 qVersion()；切英文后动作文案变 About /
+	 *           About Qt，对话框标题同步为 About Qt。
+	 * @priority P1
+	 */
+	void helpMenuAboutDialogs() {
+		MainWindow window; // Arrange
+		window.show();
+
+		auto* aboutAction = window.findChild<QAction*>(QStringLiteral("actionAbout"));
+		auto* aboutQtAction = window.findChild<QAction*>(QStringLiteral("actionAboutQt"));
+		QVERIFY(aboutAction != nullptr);
+		QVERIFY(aboutQtAction != nullptr);
+		if (aboutAction == nullptr || aboutQtAction == nullptr) {
+			return; // 兜底：显式返回帮助静态分析器确认解引用安全
+		}
+		QCOMPARE(aboutAction->text(), QStringLiteral("关于"));
+		QCOMPARE(aboutQtAction->text(), QStringLiteral("关于 Qt"));
+
+		// 「关于」：CarbonUI 深色对话框 + 五行信息
+		QDialog* about = window.createAboutDialog(nullptr);
+		QVERIFY(about != nullptr);
+		if (about != nullptr) {
+			auto* title = about->findChild<QLabel*>(QStringLiteral("CarbonUIDialogTitle"));
+			QVERIFY(title != nullptr);
+			if (title != nullptr) {
+				QCOMPARE(title->text(), QStringLiteral("关于"));
+			}
+			const auto rows = about->findChildren<QLabel*>(QStringLiteral("CarbonUIDialogRow"));
+			QCOMPARE(rows.size(), 5);
+			if (!rows.isEmpty()) {
+				QVERIFY(rows.first()->text().contains(QStringLiteral("1.0.0")));
+			}
+			delete about;
+		}
+
+		// 「关于 Qt」：同样走 CarbonUI 对话框，首行是运行时 Qt 版本
+		QDialog* aboutQt = window.createAboutQtDialog(nullptr);
+		QVERIFY(aboutQt != nullptr);
+		if (aboutQt != nullptr) {
+			auto* title = aboutQt->findChild<QLabel*>(QStringLiteral("CarbonUIDialogTitle"));
+			QVERIFY(title != nullptr);
+			if (title != nullptr) {
+				QCOMPARE(title->text(), QStringLiteral("关于 Qt"));
+			}
+			const auto rows = aboutQt->findChildren<QLabel*>(QStringLiteral("CarbonUIDialogRow"));
+			QCOMPARE(rows.size(), 4);
+			if (!rows.isEmpty()) {
+				QVERIFY(rows.first()->text().contains(QString::fromLatin1(qVersion())));
+			}
+			delete aboutQt;
+		}
+
+		// 英文：菜单动作与对话框标题都跟随语言
+		window.setLanguage(MainWindow::Language::English);
+		QCOMPARE(aboutAction->text(), QStringLiteral("About"));
+		QCOMPARE(aboutQtAction->text(), QStringLiteral("About Qt"));
+		QDialog* aboutEnglish = window.createAboutQtDialog(nullptr);
+		QVERIFY(aboutEnglish != nullptr);
+		if (aboutEnglish != nullptr) {
+			auto* title = aboutEnglish->findChild<QLabel*>(QStringLiteral("CarbonUIDialogTitle"));
+			QVERIFY(title != nullptr);
+			if (title != nullptr) {
+				QCOMPARE(title->text(), QStringLiteral("About Qt"));
+			}
+			delete aboutEnglish;
+		}
+	}
+
+	/**
 	 * @test   MainWindowUiTest.SelectionLabelClickTogglesCheck
 	 * @brief  行为断言：指示灯居左形态下，点击旁置文案标签也能切换勾选状态。
 	 * @details 目的：锁住 SelectionPage::eventFilter 的"标签点击 → 复选框

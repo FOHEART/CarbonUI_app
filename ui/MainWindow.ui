@@ -59,6 +59,7 @@
      <string>帮助</string>
     </property>
     <addaction name="actionAbout"/>
+    <addaction name="actionAboutQt"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuLanguage"/>
@@ -100,6 +101,11 @@
   <action name="actionAbout">
    <property name="text">
     <string>关于</string>
+   </property>
+  </action>
+  <action name="actionAboutQt">
+   <property name="text">
+    <string>关于 Qt</string>
    </property>
   </action>
  </widget>

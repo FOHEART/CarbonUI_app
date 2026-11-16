@@ -23,9 +23,11 @@
 
 #include "ButtonPage.h"
 #include "CarbonUIClass.h"
+#include "CarbonUIDialog.h"
 #include "CarbonUIQMenuBar.h"
 #include "CarbonUIQTabWidget.h"
 #include "CarbonUIQToolBar.h"
+#include "CarbonUIVersion.h"
 #include "DialogPage.h"
 #include "InputPage.h"
 #include "ListPage.h"
@@ -33,14 +35,18 @@
 #include "TextOverflowPage.h"
 
 #include <QtCore/QList>
+#include <QtCore/QSysInfo>
 #include <QtGui/QIcon>
 #include <QtWidgets/QActionGroup>
+#include <QtWidgets/QDialog>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QToolBar>
 
 namespace {
 /// @brief 状态栏临时消息展示时长（毫秒）。
 constexpr int kStatusTimeoutMs = 2000;
+/// @brief 应用版本号（「关于」对话框与状态栏共用的唯一来源）。
+const char* const kAppVersion = "1.0.0";
 } // namespace
 
 /**
@@ -58,7 +64,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent) {
 	// 状态栏常驻指示：语言 + 版本（右侧 permanent 区，不随临时消息消失）
 	statusLang_ = new QLabel(this);
 	statusLang_->setObjectName(QStringLiteral("statusLang"));
-	statusVersion_ = new QLabel(QStringLiteral("v1.0.0"), this);
+	statusVersion_ = new QLabel(QStringLiteral("v") + QLatin1String(kAppVersion), this);
 	statusVersion_->setObjectName(QStringLiteral("statusVersion"));
 	statusBar()->addPermanentWidget(statusLang_);
 	statusBar()->addPermanentWidget(statusVersion_);
@@ -133,15 +139,10 @@ void MainWindow::connectSignals() {
 	connect(ui->actionLangEnglish, &QAction::triggered, this,
 	        [this] { setLanguage(Language::English); });
 
-	// 文件 / 帮助
+	// 文件 / 帮助：帮助菜单弹出 CarbonUI 深色「关于」/「关于 Qt」对话框
 	connect(ui->actionExit, &QAction::triggered, this, &MainWindow::close);
-	connect(ui->actionAbout, &QAction::triggered, this, [this] {
-		statusBar()->showMessage(
-		    langText("CarbonUI 控件测试台 v1.0.0：分类验证 CarbonUI 控件的功能与显示效果。",
-			         "CarbonUI Widget Gallery v1.0.0: verify CarbonUI widgets' behavior and "
-			         "visuals."),
-		    5000);
-	});
+	connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::showAbout);
+	connect(ui->actionAboutQt, &QAction::triggered, this, &MainWindow::showAboutQt);
 
 	// 各页面交互消息 -> 状态栏临时消息
 	const QList<GalleryPage*> pages = {buttonPage_, selectionPage_,    inputPage_,
@@ -175,6 +176,55 @@ MainWindow::Language MainWindow::currentLanguage() const {
 }
 
 /**
+ * @brief 按当前语言构造「关于」对话框（详见 MainWindow.h）。
+ * @param[in] parent 对话框父窗口，可为 NULL。
+ * @return 新建的 CarbonUI 深色对话框，五行信息已填充。
+ */
+QDialog* MainWindow::createAboutDialog(QWidget* parent) const {
+	auto* dialog = new CarbonUIDialog(langText("关于", "About"), parent);
+	dialog->addInfoRow(langText("程序版本", "Program version"), QLatin1String(kAppVersion));
+	dialog->addInfoRow(langText("CarbonUI 版本", "CarbonUI version"),
+	                   QLatin1String(CARBONUI_VERSION));
+	dialog->addInfoRow(langText("Qt 版本", "Qt version"), QLatin1String(qVersion()));
+	dialog->addInfoRow(langText("构建时间", "Build time"), QStringLiteral(__DATE__ " " __TIME__));
+	dialog->addInfoRow(langText("许可证", "License"), QStringLiteral("Mozilla Public License 2.0"));
+	return dialog;
+}
+
+/**
+ * @brief 按当前语言构造「关于 Qt」对话框（详见 MainWindow.h）。
+ * @param[in] parent 对话框父窗口，可为 NULL。
+ * @return 新建的 CarbonUI 深色对话框，四行信息已填充。
+ */
+QDialog* MainWindow::createAboutQtDialog(QWidget* parent) const {
+	auto* dialog = new CarbonUIDialog(langText("关于 Qt", "About Qt"), parent);
+	dialog->addInfoRow(langText("Qt 版本", "Qt version"), QLatin1String(qVersion()));
+	dialog->addInfoRow(langText("编译期版本", "Built against"), QLatin1String(QT_VERSION_STR));
+	dialog->addInfoRow(langText("平台", "Platform"), QSysInfo::prettyProductName());
+	dialog->addInfoRow(langText("许可", "License"),
+	                   langText("LGPL v3 或商业许可", "LGPL v3 or a commercial license"));
+	return dialog;
+}
+
+/**
+ * @brief 弹出「关于」对话框并释放（详见 MainWindow.h）。
+ */
+void MainWindow::showAbout() {
+	QDialog* dialog = createAboutDialog(this);
+	dialog->exec();
+	dialog->deleteLater();
+}
+
+/**
+ * @brief 弹出「关于 Qt」对话框并释放（详见 MainWindow.h）。
+ */
+void MainWindow::showAboutQt() {
+	QDialog* dialog = createAboutQtDialog(this);
+	dialog->exec();
+	dialog->deleteLater();
+}
+
+/**
  * @brief 按当前语言取双语字符串（详见 MainWindow.h）。
  * @param[in] zh 中文文案（UTF-8 字面量）。
  * @param[in] en 英文文案（UTF-8 字面量）。
@@ -201,6 +251,7 @@ void MainWindow::retranslateUi() {
 	ui->menuHelp->setTitle(langText("帮助", "Help"));
 	ui->actionExit->setText(langText("退出", "Exit"));
 	ui->actionAbout->setText(langText("关于", "About"));
+	ui->actionAboutQt->setText(langText("关于 Qt", "About Qt"));
 
 	// Tab 页标题（顺序与 createPages 的 addTab 顺序一致）
 	ui->tabWidget->setTabText(0, langText("按钮", "Buttons"));

@@ -34,6 +34,7 @@
 namespace Ui {
 class MainWindow; ///< 由 MainWindow.ui 经 uic 生成的界面类（完整定义在 ui_MainWindow.h）。
 }
+class QDialog;          ///< 「关于」/「关于 Qt」对话框的基类（完整定义见 QtWidgets）。
 class ButtonPage;       ///< 按钮测试页（独立 .h/.cpp）。
 class SelectionPage;    ///< 选择与开关测试页（独立 .h/.cpp）。
 class InputPage;        ///< 输入测试页（独立 .h/.cpp）。
@@ -80,6 +81,31 @@ class MainWindow : public QMainWindow {
 	 */
 	Language currentLanguage() const;
 
+	/**
+	 * @brief 按当前语言构造「关于」对话框（不显示、不阻塞）。
+	 *
+	 * @details
+	 * 内容为五行 "名称: 取值"：程序版本 / CarbonUI 版本 / Qt 版本 / 构建时间 /
+	 * 许可证。与界面测试共用本函数，保证"菜单弹的窗"与"测的窗"是同一段构造
+	 * 代码。调用方负责 show()/exec() 并 delete（或交给父对象）。
+	 *
+	 * @param[in] parent 对话框父窗口，**可为 NULL**；非 NULL 时对话框居中于它。
+	 * @return 新建的 CarbonUI 深色对话框，父对象为 @p parent；取值一定非 NULL。
+	 */
+	QDialog* createAboutDialog(QWidget* parent) const;
+
+	/**
+	 * @brief 按当前语言构造「关于 Qt」对话框（不显示、不阻塞）。
+	 *
+	 * @details
+	 * 内容为四行 "名称: 取值"：Qt 版本 / 编译期版本 / 平台 / 许可，同样使用
+	 * CarbonUI 深色对话框，避免系统浅色 QMessageBox 与整体风格割裂。
+	 *
+	 * @param[in] parent 对话框父窗口，**可为 NULL**；非 NULL 时对话框居中于它。
+	 * @return 新建的 CarbonUI 深色对话框，父对象为 @p parent；取值一定非 NULL。
+	 */
+	QDialog* createAboutQtDialog(QWidget* parent) const;
+
   signals:
 	/**
 	 * @brief 语言切换完成信号。
@@ -95,6 +121,16 @@ class MainWindow : public QMainWindow {
 	void connectSignals();    ///< 建立菜单动作与页面状态消息的信号连接。
 	void retranslateUi();     ///< 按当前语言覆写骨架文本并下发语言到各页面。
 	QString langText(const char* zh, const char* en) const; ///< 按当前语言取双语字符串。
+
+	/**
+	 * @brief 弹出「关于」对话框（帮助菜单），返回后释放。
+	 */
+	void showAbout();
+
+	/**
+	 * @brief 弹出「关于 Qt」对话框（帮助菜单），返回后释放。
+	 */
+	void showAboutQt();
 	/// @}
 
 	/// @name 界面成员
