@@ -23,6 +23,9 @@
 
 #include "ButtonPage.h"
 #include "CarbonUIClass.h"
+#include "CarbonUIQMenuBar.h"
+#include "CarbonUIQTabWidget.h"
+#include "CarbonUIQToolBar.h"
 #include "DialogPage.h"
 #include "InputPage.h"
 #include "ListPage.h"
@@ -102,9 +105,9 @@ void MainWindow::createPages() {
  *          retranslateUi 按语言覆写。
  */
 void MainWindow::applyCarbonStyles() {
-	CarbonUIClass::setupMenuBarStyle(ui->menuBar);
-	CarbonUIClass::setupTabWidgetStyle(ui->tabWidget);
-	CarbonUIClass::setupToolBarStyle(ui->mainToolBar);
+	CarbonUIQMenuBar::applyStyle(ui->menuBar);
+	CarbonUIQTabWidget::applyStyle(ui->tabWidget);
+	CarbonUIQToolBar::applyStyle(ui->mainToolBar);
 
 	auto* toolOpen = ui->mainToolBar->addAction(QIcon(":/images/config.png"), QString());
 	toolOpen->setObjectName(QStringLiteral("actionToolOpen"));

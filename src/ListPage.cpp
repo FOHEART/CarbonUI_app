@@ -18,7 +18,7 @@
 
 #include "ListPage.h"
 
-#include "CarbonUIClass.h"
+#include "CarbonUIQTreeWidget.h"
 #include "groupboxcollapser.h"
 
 #include <QtWidgets/QVBoxLayout>
@@ -87,7 +87,7 @@ void ListPage::buildUi() {
  * @brief 应用 CarbonUI 树风格并安装折叠器：A 默认展开、B 默认折叠（非幂等）。
  */
 void ListPage::applyStyles() {
-	CarbonUIClass::applyTreeWidgetStyle(treeWidget_);
+	CarbonUIQTreeWidget::applyStyle(treeWidget_);
 	QGroupBoxCollapser::installIntoGroupBox(groupBoxCollapseA_, nullptr, true);
 	QGroupBoxCollapser::installIntoGroupBox(groupBoxCollapseB_, nullptr, false);
 }

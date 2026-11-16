@@ -18,7 +18,8 @@
 
 #include "ButtonPage.h"
 
-#include "CarbonUIClass.h"
+#include "CarbonUIQPushButton.h"
+#include "CarbonUIQScrollArea.h"
 
 #include <QtWidgets/QHBoxLayout>
 #include <QtWidgets/QVBoxLayout>
@@ -118,13 +119,13 @@ void ButtonPage::buildUi() {
  * @brief 应用 CarbonUI 按钮风格：独立圆角 + 分段（左圆/矩形/右圆）+ 长文本。
  */
 void ButtonPage::applyStyles() {
-	CarbonUIClass::applyScrollAreaStyle(scrollArea_);
-	CarbonUIClass::applyButtonStyle(pushButton_, CarbonUIClass::Shape_RoundAll);
-	CarbonUIClass::applyButtonStyle(pushButtonSegL_, CarbonUIClass::Shape_LeftRound);
-	CarbonUIClass::applyButtonStyle(pushButtonSegM_, CarbonUIClass::Shape_Rectangle);
-	CarbonUIClass::applyButtonStyle(pushButtonSegR_, CarbonUIClass::Shape_RightRound);
-	CarbonUIClass::applyButtonStyle(pushButtonLongCn_, CarbonUIClass::Shape_RoundAll);
-	CarbonUIClass::applyButtonStyle(pushButtonLongEn_, CarbonUIClass::Shape_RoundAll);
+	CarbonUIQScrollArea::applyStyle(scrollArea_);
+	CarbonUIQPushButton::applyStyle(pushButton_, CarbonUIQPushButton::Shape_RoundAll);
+	CarbonUIQPushButton::applyStyle(pushButtonSegL_, CarbonUIQPushButton::Shape_LeftRound);
+	CarbonUIQPushButton::applyStyle(pushButtonSegM_, CarbonUIQPushButton::Shape_Rectangle);
+	CarbonUIQPushButton::applyStyle(pushButtonSegR_, CarbonUIQPushButton::Shape_RightRound);
+	CarbonUIQPushButton::applyStyle(pushButtonLongCn_, CarbonUIQPushButton::Shape_RoundAll);
+	CarbonUIQPushButton::applyStyle(pushButtonLongEn_, CarbonUIQPushButton::Shape_RoundAll);
 }
 
 /**

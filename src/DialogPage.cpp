@@ -18,7 +18,7 @@
 
 #include "DialogPage.h"
 
-#include "CarbonUIClass.h"
+#include "CarbonUIQPushButton.h"
 #include "CarbonUIDialog.h"
 
 #include <QtWidgets/QHBoxLayout>
@@ -91,7 +91,7 @@ void DialogPage::buildUi() {
  * @brief 应用 CarbonUI 按钮风格：打开按钮用四角圆角主色样式。
  */
 void DialogPage::applyStyles() {
-	CarbonUIClass::applyButtonStyle(pushButtonOpenDialog_, CarbonUIClass::Shape_RoundAll);
+	CarbonUIQPushButton::applyStyle(pushButtonOpenDialog_, CarbonUIQPushButton::Shape_RoundAll);
 }
 
 /**

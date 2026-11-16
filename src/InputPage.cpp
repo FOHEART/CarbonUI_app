@@ -17,7 +17,8 @@
 
 #include "InputPage.h"
 
-#include "CarbonUIClass.h"
+#include "CarbonUIQComboBox.h"
+#include "CarbonUIQLineEdit.h"
 
 #include <QtWidgets/QVBoxLayout>
 
@@ -95,8 +96,8 @@ void InputPage::buildUi() {
  * @brief 应用 CarbonUI 风格：数字输入框（聚焦全选 + 校验）与下拉框。
  */
 void InputPage::applyStyles() {
-	CarbonUIClass::applyLineEditStyle_numberInput(lineEditNumber_, 200);
-	CarbonUIClass::setupComboBoxStyle(comboBox_);
+	CarbonUIQLineEdit::applyStyle(lineEditNumber_, 200);
+	CarbonUIQComboBox::applyStyle(comboBox_);
 }
 
 /**

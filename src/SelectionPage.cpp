@@ -21,7 +21,9 @@
 
 #include "SelectionPage.h"
 
-#include "CarbonUIClass.h"
+#include "CarbonUIQCheckBox.h"
+#include "CarbonUIQPushButton.h"
+#include "CarbonUIQRadioButton.h"
 
 #include <QtCore/QEvent>
 #include <QtWidgets/QHBoxLayout>
@@ -207,17 +209,19 @@ void SelectionPage::buildUi() {
  * @brief 应用 CarbonUI 选择类风格：自绘圆角单选 + 自绘指示灯复选框（非幂等）。
  */
 void SelectionPage::applyStyles() {
-	CarbonUIClass::applyRadioStyle(radioButtonSolo_, CarbonUIClass::Radio_FourRound, 96);
-	CarbonUIClass::applyRadioStyle(radioButtonSegL_, CarbonUIClass::Radio_LeftRound, 72);
-	CarbonUIClass::applyRadioStyle(radioButtonSegM_, CarbonUIClass::Radio_Rectangle, 72);
-	CarbonUIClass::applyRadioStyle(radioButtonSegR_, CarbonUIClass::Radio_RightRound, 72);
-	CarbonUIClass::applyRadioStyle(radioButtonLongCn_, CarbonUIClass::Radio_FourRound, 120);
-	CarbonUIClass::applyRadioStyle(radioButtonLongEn_, CarbonUIClass::Radio_FourRound, 120);
-	CarbonUIClass::applyCheckStyle(checkIndicatorA_);
-	CarbonUIClass::applyCheckStyle(checkIndicatorB_);
-	CarbonUIClass::applyCheckStyle(checkIndicatorRightA_, CarbonUIClass::Check_IndicatorRight);
-	CarbonUIClass::applyCheckStyle(checkIndicatorRightB_, CarbonUIClass::Check_IndicatorRight);
-	CarbonUIClass::applyButtonStyle(buttonRightFormTest_, CarbonUIClass::Shape_RoundAll);
+	CarbonUIQRadioButton::applyStyle(radioButtonSolo_, CarbonUIQRadioButton::Radio_FourRound, 96);
+	CarbonUIQRadioButton::applyStyle(radioButtonSegL_, CarbonUIQRadioButton::Radio_LeftRound, 72);
+	CarbonUIQRadioButton::applyStyle(radioButtonSegM_, CarbonUIQRadioButton::Radio_Rectangle, 72);
+	CarbonUIQRadioButton::applyStyle(radioButtonSegR_, CarbonUIQRadioButton::Radio_RightRound, 72);
+	CarbonUIQRadioButton::applyStyle(radioButtonLongCn_, CarbonUIQRadioButton::Radio_FourRound,
+	                                 120);
+	CarbonUIQRadioButton::applyStyle(radioButtonLongEn_, CarbonUIQRadioButton::Radio_FourRound,
+	                                 120);
+	CarbonUIQCheckBox::applyStyle(checkIndicatorA_);
+	CarbonUIQCheckBox::applyStyle(checkIndicatorB_);
+	CarbonUIQCheckBox::applyStyle(checkIndicatorRightA_, CarbonUIQCheckBox::Check_IndicatorRight);
+	CarbonUIQCheckBox::applyStyle(checkIndicatorRightB_, CarbonUIQCheckBox::Check_IndicatorRight);
+	CarbonUIQPushButton::applyStyle(buttonRightFormTest_, CarbonUIQPushButton::Shape_RoundAll);
 }
 
 /**
@@ -279,7 +283,7 @@ void SelectionPage::toggleIndicatorForm() {
 	const bool checkedA = checkIndicatorA_->isChecked();
 	const bool checkedB = checkIndicatorB_->isChecked();
 	const auto position =
-	    toRight ? CarbonUIClass::Check_IndicatorRight : CarbonUIClass::Check_IndicatorLeft;
+	    toRight ? CarbonUIQCheckBox::Check_IndicatorRight : CarbonUIQCheckBox::Check_IndicatorLeft;
 
 	// A 行：销毁旧控件，新控件以相同 objectName 插回行首并恢复勾选状态
 	checkRowLayoutA_->removeWidget(checkIndicatorA_);
@@ -287,7 +291,7 @@ void SelectionPage::toggleIndicatorForm() {
 	checkIndicatorA_ = new QCheckBox(groupBoxChecks_);
 	checkIndicatorA_->setObjectName(QLatin1String(kNameCheckA));
 	checkRowLayoutA_->insertWidget(0, checkIndicatorA_);
-	CarbonUIClass::applyCheckStyle(checkIndicatorA_, position);
+	CarbonUIQCheckBox::applyStyle(checkIndicatorA_, position);
 	checkIndicatorA_->setChecked(checkedA);
 
 	// B 行同理
@@ -296,7 +300,7 @@ void SelectionPage::toggleIndicatorForm() {
 	checkIndicatorB_ = new QCheckBox(groupBoxChecks_);
 	checkIndicatorB_->setObjectName(QLatin1String(kNameCheckB));
 	checkRowLayoutB_->insertWidget(0, checkIndicatorB_);
-	CarbonUIClass::applyCheckStyle(checkIndicatorB_, position);
+	CarbonUIQCheckBox::applyStyle(checkIndicatorB_, position);
 	checkIndicatorB_->setChecked(checkedB);
 
 	// 旁置标签只服务居左形态；居右形态下隐藏，避免与控件内子标签重复

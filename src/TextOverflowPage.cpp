@@ -18,7 +18,11 @@
 
 #include "TextOverflowPage.h"
 
-#include "CarbonUIClass.h"
+#include "CarbonUIQCheckBox.h"
+#include "CarbonUIQComboBox.h"
+#include "CarbonUIQPushButton.h"
+#include "CarbonUIQRadioButton.h"
+#include "CarbonUIQScrollArea.h"
 
 #include <QtWidgets/QVBoxLayout>
 
@@ -174,12 +178,12 @@ void TextOverflowPage::buildUi() {
  * @brief 应用 CarbonUI 风格：滚动区、按钮、单选、复选指示灯、下拉框。
  */
 void TextOverflowPage::applyStyles() {
-	CarbonUIClass::applyScrollAreaStyle(scrollArea_);
-	CarbonUIClass::applyButtonStyle(pushButtonOvCn_, CarbonUIClass::Shape_RoundAll);
-	CarbonUIClass::applyButtonStyle(pushButtonOvEn_, CarbonUIClass::Shape_RoundAll);
-	CarbonUIClass::applyRadioStyle(radioButtonOv_, CarbonUIClass::Radio_FourRound, 96);
-	CarbonUIClass::applyCheckStyle(checkIndicatorOv_);
-	CarbonUIClass::setupComboBoxStyle(comboBoxOv_);
+	CarbonUIQScrollArea::applyStyle(scrollArea_);
+	CarbonUIQPushButton::applyStyle(pushButtonOvCn_, CarbonUIQPushButton::Shape_RoundAll);
+	CarbonUIQPushButton::applyStyle(pushButtonOvEn_, CarbonUIQPushButton::Shape_RoundAll);
+	CarbonUIQRadioButton::applyStyle(radioButtonOv_, CarbonUIQRadioButton::Radio_FourRound, 96);
+	CarbonUIQCheckBox::applyStyle(checkIndicatorOv_);
+	CarbonUIQComboBox::applyStyle(comboBoxOv_);
 }
 
 /**
