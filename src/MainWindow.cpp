@@ -31,6 +31,7 @@
 #include "DialogPage.h"
 #include "InputPage.h"
 #include "ListPage.h"
+#include "ScrollPage.h"
 #include "SelectionPage.h"
 #include "TextOverflowPage.h"
 
@@ -84,9 +85,9 @@ MainWindow::~MainWindow() {
 }
 
 /**
- * @brief 创建五个分类测试页并按顺序加入 TabWidget（详见 MainWindow.h）。
+ * @brief 创建七个分类测试页并按顺序加入 TabWidget（详见 MainWindow.h）。
  * @details 页面父对象交给 TabWidget（addTab 重设父级），构造顺序即 Tab
- *          顺序，retranslateUi 按 0..4 覆写标题。
+ *          顺序，retranslateUi 按 0..6 覆写标题。
  */
 void MainWindow::createPages() {
 	buttonPage_ = new ButtonPage(this);
@@ -95,6 +96,7 @@ void MainWindow::createPages() {
 	listPage_ = new ListPage(this);
 	textOverflowPage_ = new TextOverflowPage(this);
 	dialogPage_ = new DialogPage(this);
+	scrollPage_ = new ScrollPage(this);
 
 	ui->tabWidget->addTab(buttonPage_, QString());
 	ui->tabWidget->addTab(selectionPage_, QString());
@@ -102,6 +104,7 @@ void MainWindow::createPages() {
 	ui->tabWidget->addTab(listPage_, QString());
 	ui->tabWidget->addTab(textOverflowPage_, QString());
 	ui->tabWidget->addTab(dialogPage_, QString());
+	ui->tabWidget->addTab(scrollPage_, QString());
 }
 
 /**
@@ -145,8 +148,8 @@ void MainWindow::connectSignals() {
 	connect(ui->actionAboutQt, &QAction::triggered, this, &MainWindow::showAboutQt);
 
 	// 各页面交互消息 -> 状态栏临时消息
-	const QList<GalleryPage*> pages = {buttonPage_, selectionPage_,    inputPage_,
-	                                   listPage_,   textOverflowPage_, dialogPage_};
+	const QList<GalleryPage*> pages = {buttonPage_,       selectionPage_, inputPage_, listPage_,
+	                                   textOverflowPage_, dialogPage_,    scrollPage_};
 	for (GalleryPage* page : pages) {
 		connect(page, &GalleryPage::statusMessage, this, [this](const QString& message) {
 			statusBar()->showMessage(message, kStatusTimeoutMs);
@@ -260,6 +263,7 @@ void MainWindow::retranslateUi() {
 	ui->tabWidget->setTabText(3, langText("列表与折叠", "Lists"));
 	ui->tabWidget->setTabText(4, langText("文本溢出", "Overflow"));
 	ui->tabWidget->setTabText(5, langText("对话框", "Dialogs"));
+	ui->tabWidget->setTabText(6, langText("滚动", "Scroll"));
 
 	// 各页面内部文本
 	buttonPage_->retranslateUi(lang_);
@@ -268,6 +272,7 @@ void MainWindow::retranslateUi() {
 	listPage_->retranslateUi(lang_);
 	textOverflowPage_->retranslateUi(lang_);
 	dialogPage_->retranslateUi(lang_);
+	scrollPage_->retranslateUi(lang_);
 
 	// 状态栏常驻指示
 	statusLang_->setText(langText("语言：中文", "Language: English"));

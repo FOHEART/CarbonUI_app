@@ -23,6 +23,8 @@
 #include <QtWidgets/QMenuBar>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QScrollArea>
+#include <QtWidgets/QScrollBar>
 
 #include "DialogPage.h"
 #include "MainWindow.h"
@@ -390,6 +392,63 @@ class MainWindowTest : public QObject {
 
 		QTest::mouseClick(label, Qt::LeftButton);
 		QCOMPARE(checkBox->isChecked(), initial);
+	}
+
+	/**
+	 * @test   MainWindowUiTest.ScrollPageDemonstratesAreaAndBars
+	 * @brief  行为断言：新增「滚动」页装好 CarbonUIQScrollArea 与两种滚动条。
+	 * @details 目的：锁住第 7 个 Tab（滚动）确实存在且演示对象齐全——滚动区内部
+	 *          两条滚动条由 CarbonUIQScrollBar 刷过（8px 命中范围、常态 4px），竖直条来自
+	 *          CarbonUIQScrollBar 构造函数、水平条来自原生 QScrollBar +
+	 *          applyStyle()，取值变化会同步数值标签。
+	 * @expected 末页标题为「滚动」；scrollAreaDemo 有内容且两条滚动条带 CarbonUI
+	 *           QSS；scrollBarVertical 为竖直条、scrollBarHorizontal 为水平条且
+	 *           都带 #999999 滑块规则；setValue(72) 后竖直条数值标签含 72。
+	 * @priority P1
+	 */
+	void scrollPageDemonstratesAreaAndBars() {
+		MainWindow window; // Arrange
+		window.show();
+
+		auto* tabs = window.findChild<QTabWidget*>(QStringLiteral("tabWidget"));
+		QVERIFY(tabs != nullptr);
+		if (tabs != nullptr) {
+			QCOMPARE(tabs->tabText(tabs->count() - 1), QStringLiteral("滚动"));
+		}
+
+		// 滚动区：内部滚动条走 CarbonUIQScrollBar（8px 命中范围、常态 4px、悬停 8px）
+		auto* area = window.findChild<QScrollArea*>(QStringLiteral("scrollAreaDemo"));
+		QVERIFY(area != nullptr);
+		if (area != nullptr) {
+			QVERIFY(area->widget() != nullptr);
+			QVERIFY(area->verticalScrollBar()->styleSheet().contains(
+			    QStringLiteral("QScrollBar:vertical { background: #2e2e2e; width: 8px;")));
+			QVERIFY(area->horizontalScrollBar()->styleSheet().contains(
+			    QStringLiteral("QScrollBar:horizontal { background: #2e2e2e; height: 8px;")));
+		}
+
+		// 独立滚动条：竖直条来自构造，水平条来自 applyStyle 静态接口
+		auto* verticalBar = window.findChild<QScrollBar*>(QStringLiteral("scrollBarVertical"));
+		auto* horizontalBar = window.findChild<QScrollBar*>(QStringLiteral("scrollBarHorizontal"));
+		QVERIFY(verticalBar != nullptr);
+		QVERIFY(horizontalBar != nullptr);
+		if (verticalBar == nullptr || horizontalBar == nullptr) {
+			return; // 兜底：显式返回帮助静态分析器确认解引用安全
+		}
+		QCOMPARE(verticalBar->orientation(), Qt::Vertical);
+		QCOMPARE(horizontalBar->orientation(), Qt::Horizontal);
+		QVERIFY(verticalBar->styleSheet().contains(
+		    QStringLiteral("QScrollBar::handle:vertical { background: #999999;")));
+		QVERIFY(horizontalBar->styleSheet().contains(
+		    QStringLiteral("QScrollBar::handle:horizontal { background: #999999;")));
+
+		// 取值回显：拖动滚动条后数值标签同步
+		auto* value = window.findChild<QLabel*>(QStringLiteral("labelScrollBarVerticalValue"));
+		QVERIFY(value != nullptr);
+		if (value != nullptr) {
+			verticalBar->setValue(72);
+			QVERIFY(value->text().contains(QStringLiteral("72")));
+		}
 	}
 };
 
