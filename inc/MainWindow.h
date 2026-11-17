@@ -8,10 +8,10 @@
  *
  * @details
  * MainWindow 负责三件事：
- *  1. 界面装配：setupUi（菜单/工具栏/状态栏/空 TabWidget 骨架）+ 创建七个
+ *  1. 界面装配：setupUi（菜单/工具栏/状态栏/空 TabWidget 骨架）+ 创建八个
  *     页面控件（ButtonPage / SelectionPage / InputPage / ListPage /
- *     TextOverflowPage / DialogPage / ScrollPage，各自独立 .h/.cpp）并加入
- *     Tab + 容器级 CarbonUI 风格；
+ *     TextOverflowPage / DialogPage / HeaderButtonPage / ScrollPage，各自独立
+ *     .h/.cpp）并加入 Tab + 容器级 CarbonUI 风格；
  *  2. 语言管理：@ref setLanguage 切换中英文并触发 @ref retranslateUi 全量
  *     重翻译（窗口标题、Tab 标题、菜单、状态栏），并下发给各页面
  *     （页面内部文本由页面自己覆写）；
@@ -42,13 +42,14 @@ class InputPage;        ///< 输入测试页（独立 .h/.cpp）。
 class ListPage;         ///< 列表与折叠测试页（独立 .h/.cpp）。
 class TextOverflowPage; ///< 文本溢出测试页（独立 .h/.cpp）。
 class DialogPage;       ///< 对话框测试页（独立 .h/.cpp）。
+class HeaderButtonPage; ///< 带按钮标题栏控件测试页（独立 .h/.cpp）。
 class ScrollPage;       ///< 滚动测试页（独立 .h/.cpp）。
 
 /**
  * @brief 主窗口：CarbonUI 控件分类测试台。
  *
  * @details
- * 构造完成后窗口即可显示使用：七个页面已装配并应用 CarbonUI 风格、默认
+ * 构造完成后窗口即可显示使用：八个页面已装配并应用 CarbonUI 风格、默认
  * 语言为中文、页面交互事件已接入状态栏。语言切换入口在菜单栏"语言"菜单
  * （中文 / English）。无共享状态，线程亲和性为 GUI 主线程。
  */
@@ -118,7 +119,7 @@ class MainWindow : public QMainWindow {
   private:
 	/// @name 内部装配（仅构造与语言切换路径调用）
 	/// @{
-	void createPages();       ///< 创建七个页面控件并加入 TabWidget（仅构造时调用）。
+	void createPages();       ///< 创建八个页面控件并加入 TabWidget（仅构造时调用）。
 	void applyCarbonStyles(); ///< 应用容器级 CarbonUI 风格与工具栏动作（仅构造时调用一次）。
 	void connectSignals();    ///< 建立菜单动作与页面状态消息的信号连接。
 	void retranslateUi();     ///< 按当前语言覆写骨架文本并下发语言到各页面。
@@ -147,6 +148,7 @@ class MainWindow : public QMainWindow {
 	ListPage* listPage_ = nullptr;                 ///< 第 3 页：列表与折叠测试页。
 	TextOverflowPage* textOverflowPage_ = nullptr; ///< 第 4 页：文本溢出测试页。
 	DialogPage* dialogPage_ = nullptr;             ///< 第 5 页：对话框测试页。
-	ScrollPage* scrollPage_ = nullptr;             ///< 第 6 页：滚动测试页。
+	HeaderButtonPage* headerButtonPage_ = nullptr; ///< 第 6 页：带按钮标题栏控件测试页。
+	ScrollPage* scrollPage_ = nullptr;             ///< 第 7 页：滚动测试页。
 	                                               /// @}
 };

@@ -73,6 +73,7 @@ set(APPLIB_SOURCES
     src/TextOverflowPage.cpp
     src/DialogPage.cpp
     src/ScrollPage.cpp
+    src/HeaderButtonPage.cpp
     src/AppFont.cpp
 )
 
@@ -86,6 +87,7 @@ set(APPLIB_HEADERS
     inc/TextOverflowPage.h
     inc/DialogPage.h
     inc/ScrollPage.h
+    inc/HeaderButtonPage.h
     inc/AppFont.h
 )
 
