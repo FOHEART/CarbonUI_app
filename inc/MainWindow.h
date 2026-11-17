@@ -35,7 +35,7 @@
 namespace Ui {
 class MainWindow; ///< 由 MainWindow.ui 经 uic 生成的界面类（完整定义在 ui_MainWindow.h）。
 }
-class QDialog;          ///< 「关于」/「关于 Qt」对话框的基类（完整定义见 QtWidgets）。
+class QDialog;          ///< 「关于」对话框的基类（完整定义见 QtWidgets）。
 class ButtonPage;       ///< 按钮测试页（独立 .h/.cpp）。
 class SelectionPage;    ///< 选择与开关测试页（独立 .h/.cpp）。
 class InputPage;        ///< 输入测试页（独立 .h/.cpp）。
@@ -96,18 +96,6 @@ class MainWindow : public QMainWindow {
 	 * @return 新建的 CarbonUI 深色对话框，父对象为 @p parent；取值一定非 NULL。
 	 */
 	QDialog* createAboutDialog(QWidget* parent) const;
-
-	/**
-	 * @brief 按当前语言构造「关于 Qt」对话框（不显示、不阻塞）。
-	 *
-	 * @details
-	 * 内容为四行 "名称: 取值"：Qt 版本 / 编译期版本 / 平台 / 许可，同样使用
-	 * CarbonUI 深色对话框，避免系统浅色 QMessageBox 与整体风格割裂。
-	 *
-	 * @param[in] parent 对话框父窗口，**可为 NULL**；非 NULL 时对话框居中于它。
-	 * @return 新建的 CarbonUI 深色对话框，父对象为 @p parent；取值一定非 NULL。
-	 */
-	QDialog* createAboutQtDialog(QWidget* parent) const;
 
   signals:
 	/**

@@ -26,6 +26,7 @@
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QScrollBar>
 
+#include "CarbonUIAboutQtDialog.h"
 #include "DialogPage.h"
 #include "MainWindow.h"
 
@@ -284,14 +285,15 @@ class MainWindowTest : public QObject {
 	/**
 	 * @test   MainWindowUiTest.HelpMenuAboutDialogs
 	 * @brief  行为断言：帮助菜单的「关于」「关于 Qt」都接到 CarbonUI 深色对话框。
-	 * @details 目的：锁住"帮助菜单不是空壳"，且两个对话框都用 CarbonUI 风格
-	 *          （而非系统浅色 QMessageBox），同时覆盖中英文重翻译。不点菜单项
-	 *          （exec 会阻塞），直接调用 createAboutDialog / createAboutQtDialog
-	 *          检查标题与信息行。
+	 * @details 目的：锁住"帮助菜单不是空壳"，且「关于」用 CarbonUI 风格对话框
+	 *          （而非系统浅色 QMessageBox）、「关于 Qt」走库内置
+	 *          CarbonUIAboutQtDialog，同时覆盖中英文重翻译。不点菜单项
+	 *          （exec 会阻塞），直接调用 createAboutDialog / 构造
+	 *          CarbonUIAboutQtDialog 检查标题与内容。
 	 * @expected actionAbout / actionAboutQt 存在且中文文案为「关于」「关于 Qt」；
-	 *           关于框标题「关于」、五行、首行含 1.0.0；关于 Qt 框标题「关于 Qt」、
-	 *           四行、首行含运行时 qVersion()；切英文后动作文案变 About /
-	 *           About Qt，对话框标题同步为 About Qt。
+	 *           关于框标题「关于」、五行、首行含 1.0.0；关于 Qt 框标题
+	 *           "ABOUT QT"、富文本正文含运行时 qVersion()；切英文后动作文案
+	 *           变 About / About Qt（关于 Qt 对话框为库内置固定文案，与语言无关）。
 	 * @priority P1
 	 */
 	void helpMenuAboutDialogs() {
@@ -325,37 +327,25 @@ class MainWindowTest : public QObject {
 			delete about;
 		}
 
-		// 「关于 Qt」：同样走 CarbonUI 对话框，首行是运行时 Qt 版本
-		QDialog* aboutQt = window.createAboutQtDialog(nullptr);
-		QVERIFY(aboutQt != nullptr);
-		if (aboutQt != nullptr) {
-			auto* title = aboutQt->findChild<QLabel*>(QStringLiteral("CarbonUIDialogTitle"));
-			QVERIFY(title != nullptr);
-			if (title != nullptr) {
-				QCOMPARE(title->text(), QStringLiteral("关于 Qt"));
-			}
-			const auto rows = aboutQt->findChildren<QLabel*>(QStringLiteral("CarbonUIDialogRow"));
-			QCOMPARE(rows.size(), 4);
-			if (!rows.isEmpty()) {
-				QVERIFY(rows.first()->text().contains(QString::fromLatin1(qVersion())));
-			}
-			delete aboutQt;
+		// 「关于 Qt」：库内置 CarbonUIAboutQtDialog，标题固定 ABOUT QT，
+		// 富文本正文含运行时 Qt 版本（栈上构造，无生命周期管理）
+		CarbonUIAboutQtDialog aboutQtDialog;
+		auto* aboutQtTitle =
+		    aboutQtDialog.findChild<QLabel*>(QStringLiteral("CarbonUIDialogTitle"));
+		QVERIFY(aboutQtTitle != nullptr);
+		if (aboutQtTitle != nullptr) {
+			QCOMPARE(aboutQtTitle->text(), QStringLiteral("ABOUT QT"));
+		}
+		auto* aboutQtBody = aboutQtDialog.findChild<QLabel*>(QStringLiteral("CarbonUIAboutQtText"));
+		QVERIFY(aboutQtBody != nullptr);
+		if (aboutQtBody != nullptr) {
+			QVERIFY(aboutQtBody->text().contains(QString::fromLatin1(qVersion())));
 		}
 
-		// 英文：菜单动作与对话框标题都跟随语言
+		// 英文：菜单动作跟随语言；关于 Qt 对话框文案由库内置，与语言无关
 		window.setLanguage(MainWindow::Language::English);
 		QCOMPARE(aboutAction->text(), QStringLiteral("About"));
 		QCOMPARE(aboutQtAction->text(), QStringLiteral("About Qt"));
-		QDialog* aboutEnglish = window.createAboutQtDialog(nullptr);
-		QVERIFY(aboutEnglish != nullptr);
-		if (aboutEnglish != nullptr) {
-			auto* title = aboutEnglish->findChild<QLabel*>(QStringLiteral("CarbonUIDialogTitle"));
-			QVERIFY(title != nullptr);
-			if (title != nullptr) {
-				QCOMPARE(title->text(), QStringLiteral("About Qt"));
-			}
-			delete aboutEnglish;
-		}
 	}
 
 	/**

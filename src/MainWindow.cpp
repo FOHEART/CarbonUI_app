@@ -22,6 +22,7 @@
 #include "ui_MainWindow.h"
 
 #include "ButtonPage.h"
+#include "CarbonUIAboutQtDialog.h"
 #include "CarbonUIClass.h"
 #include "CarbonUIDialog.h"
 #include "CarbonUIQMenuBar.h"
@@ -37,7 +38,6 @@
 #include "TextOverflowPage.h"
 
 #include <QtCore/QList>
-#include <QtCore/QSysInfo>
 #include <QtGui/QIcon>
 #include <QtWidgets/QActionGroup>
 #include <QtWidgets/QDialog>
@@ -200,21 +200,6 @@ QDialog* MainWindow::createAboutDialog(QWidget* parent) const {
 }
 
 /**
- * @brief 按当前语言构造「关于 Qt」对话框（详见 MainWindow.h）。
- * @param[in] parent 对话框父窗口，可为 NULL。
- * @return 新建的 CarbonUI 深色对话框，四行信息已填充。
- */
-QDialog* MainWindow::createAboutQtDialog(QWidget* parent) const {
-	auto* dialog = new CarbonUIDialog(langText("关于 Qt", "About Qt"), parent);
-	dialog->addInfoRow(langText("Qt 版本", "Qt version"), QLatin1String(qVersion()));
-	dialog->addInfoRow(langText("编译期版本", "Built against"), QLatin1String(QT_VERSION_STR));
-	dialog->addInfoRow(langText("平台", "Platform"), QSysInfo::prettyProductName());
-	dialog->addInfoRow(langText("许可", "License"),
-	                   langText("LGPL v3 或商业许可", "LGPL v3 or a commercial license"));
-	return dialog;
-}
-
-/**
  * @brief 弹出「关于」对话框并释放（详见 MainWindow.h）。
  */
 void MainWindow::showAbout() {
@@ -224,12 +209,12 @@ void MainWindow::showAbout() {
 }
 
 /**
- * @brief 弹出「关于 Qt」对话框并释放（详见 MainWindow.h）。
+ * @brief 弹出「关于 Qt」对话框（详见 MainWindow.h）。
+ * @details 一行调用 CarbonUI 库内置弹出对话框：对话框自足深色风格，返回后
+ *          自动销毁；文案为库内固定英文表述，不随本窗口语言切换。
  */
 void MainWindow::showAboutQt() {
-	QDialog* dialog = createAboutQtDialog(this);
-	dialog->exec();
-	dialog->deleteLater();
+	CarbonUIAboutQtDialog::showAboutQt(this);
 }
 
 /**
