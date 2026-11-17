@@ -38,7 +38,8 @@ class QWidget;
  * @brief 对话框测试页：CarbonUI 深色对话框的弹出演示。
  *
  * @details
- * 分区：对话框（说明文字 + 四个打开按钮）。对话框内容为四条 "名称: 取值"
+ * 分区：「对话框」（说明文字 + 四个打开按钮）与「颜色选择」（打开按钮 +
+ * 确认结果的颜色块与十六进制标签）。「测试」对话框内容为四条 "名称: 取值"
  * 信息行（应用修订号 / 应用构建时间 / 程序版本 / 许可证），与 CarbonUI
  * 产品线的 About 对话框一致；标题条窗口按钮按按钮选定显示最小化 / 最大化。
  */
@@ -80,6 +81,20 @@ class DialogPage : public GalleryPage {
 	 */
 	QDialog* createTestDialog(QWidget* parent, bool minimize, bool maximize) const;
 
+	/**
+	 * @brief 按当前语言构造「颜色选择」对话框（不显示、不阻塞）。
+	 *
+	 * @details
+	 * 无边框深色对话框（面板自带底色，无白色系统标题栏），内嵌 CarbonUI 子库的
+	 * @ref CarbonUIColorPickWidget（色相×饱和度选色区 + 明度滑条 + RGB/十六进制/
+	 * 透明度输入 + 颜色预览块 + Ok/Cancel），与页面按钮弹出的窗是同一段构造代码。
+	 * Ok / Cancel 分别驱动对话框 accept() / reject()。
+	 *
+	 * @param[in] parent 对话框父窗口，**可为 NULL**；非 NULL 时对话框居中于它。
+	 * @return 新建的对话框，父对象为 @p parent；取值一定非 NULL。
+	 */
+	QDialog* createColorPickerDialog(QWidget* parent) const;
+
   protected:
 	/**
 	 * @brief 按当前语言覆写页内全部文本（详见 GalleryPage::retranslatePage）。
@@ -97,6 +112,11 @@ class DialogPage : public GalleryPage {
 	 */
 	void openDialog(bool minimize, bool maximize);
 
+	/**
+	 * @brief 以模态方式弹出「颜色选择」对话框，接受后向状态栏上报所选颜色。
+	 */
+	void openColorPicker();
+
 	QGroupBox* groupBoxDialogs_ = nullptr; ///< "对话框"分组框（objectName: groupBoxDialogs）。
 	QLabel* labelDialogHint_ = nullptr;    ///< 对话框说明文字（objectName: labelDialogHint）。
 	QPushButton* pushButtonOpenDialog_ =
@@ -107,6 +127,12 @@ class DialogPage : public GalleryPage {
 	    nullptr; ///< 仅最大化（objectName: pushButtonOpenDialogMaximize）。
 	QPushButton* pushButtonOpenDialogBoth_ =
 	    nullptr; ///< 最小化 + 最大化（objectName: pushButtonOpenDialogBoth）。
+	QPushButton* pushButtonOpenColorPick_ =
+	    nullptr; ///< 打开「颜色选择」对话框（objectName: pushButtonOpenColorPick）。
+	QGroupBox* groupBoxColorPick_ =
+	    nullptr;                         ///< "颜色选择"分组框（objectName: groupBoxColorPick）。
+	QLabel* labelColorSwatch_ = nullptr; ///< 确认后的颜色块（objectName: labelColorSwatch）。
+	QLabel* labelColorHex_ = nullptr;    ///< 确认后的十六进制文本（objectName: labelColorHex）。
 };
 
 #endif // CARBONUI_APP_DIALOGPAGE_H

@@ -12,6 +12,9 @@
  * 文本覆写由 @ref retranslatePage 按当前语言完成。控件 objectName 与原
  * MainWindow.ui 中的命名保持一致，测试与脚本无需感知拆分。
  *
+ * 分区：按钮样式（主色按钮 + 左/中/右三段式按钮组）、复选按钮组
+ * （两端式 / 三段式分段复选框）与长文本按钮（观察文本是否溢出按钮边界）。
+ *
  * 线程安全：仅允许在 GUI 主线程使用。
  */
 
@@ -24,6 +27,8 @@
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QPushButton>
 #include <QtWidgets/QScrollArea>
+
+class CarbonUIQCheckButtonGroup;
 
 /**
  * @brief 按钮测试页：CarbonUI 按钮外形分类展示与点击反馈。
@@ -53,13 +58,18 @@ class ButtonPage : public GalleryPage {
 	void applyStyles();        ///< 应用 CarbonUI 按钮风格（仅构造时调用）。
 	void connectPageSignals(); ///< 连接按钮点击到状态栏消息（仅构造时调用）。
 
-	QScrollArea* scrollArea_ = nullptr;       ///< 页面滚动容器（objectName: scrollArea）。
-	QGroupBox* groupBoxButtons_ = nullptr;    ///< "按钮样式"分组框。
-	QPushButton* pushButton_ = nullptr;       ///< 主色按钮（objectName: pushButton）。
-	QPushButton* pushButtonSegL_ = nullptr;   ///< 分段按钮左段（objectName: pushButton_7）。
-	QPushButton* pushButtonSegM_ = nullptr;   ///< 分段按钮中段（objectName: pushButton_9）。
-	QPushButton* pushButtonSegR_ = nullptr;   ///< 分段按钮右段（objectName: pushButton_10）。
-	QLabel* labelSegButtonsHint_ = nullptr;   ///< 分段按钮说明文字。
+	QScrollArea* scrollArea_ = nullptr;        ///< 页面滚动容器（objectName: scrollArea）。
+	QGroupBox* groupBoxButtons_ = nullptr;     ///< "按钮样式"分组框。
+	QPushButton* pushButton_ = nullptr;        ///< 主色按钮（objectName: pushButton）。
+	QPushButton* pushButtonSegL_ = nullptr;    ///< 分段按钮左段（objectName: pushButton_7）。
+	QPushButton* pushButtonSegM_ = nullptr;    ///< 分段按钮中段（objectName: pushButton_9）。
+	QPushButton* pushButtonSegR_ = nullptr;    ///< 分段按钮右段（objectName: pushButton_10）。
+	QLabel* labelSegButtonsHint_ = nullptr;    ///< 分段按钮说明文字。
+	QGroupBox* groupBoxCheckGroups_ = nullptr; ///< "复选按钮组"分组框。
+	CarbonUIQCheckButtonGroup* checkGroupPair_ =
+	    nullptr; ///< 两端式复选按钮组（左端/右端，缝隙 2px）。
+	CarbonUIQCheckButtonGroup* checkGroupTriple_ =
+	    nullptr;                              ///< 三段式复选按钮组（左/中/右端，缝隙 2px）。
 	QGroupBox* groupBoxButtonLong_ = nullptr; ///< 长文本按钮分组框。
 	QPushButton* pushButtonLongCn_ = nullptr; ///< 长文本按钮（中文样例）。
 	QPushButton* pushButtonLongEn_ = nullptr; ///< 长文本按钮（英文样例）。

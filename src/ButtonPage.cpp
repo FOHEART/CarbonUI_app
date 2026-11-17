@@ -18,6 +18,7 @@
 
 #include "ButtonPage.h"
 
+#include "CarbonUIQCheckBox.h"
 #include "CarbonUIQPushButton.h"
 #include "CarbonUIQScrollArea.h"
 
@@ -33,6 +34,9 @@ const char* const kNameSegL = "pushButton_7";
 const char* const kNameSegM = "pushButton_9";
 const char* const kNameSegR = "pushButton_10";
 const char* const kNameHint = "labelSegButtonsHint";
+const char* const kNameGroupCheck = "groupBoxCheckGroups";
+const char* const kNameCheckPair = "checkButtonGroupPair";
+const char* const kNameCheckTriple = "checkButtonGroupTriple";
 const char* const kNameGroupLong = "groupBoxButtonLong";
 const char* const kNameLongCn = "pushButtonLongCn";
 const char* const kNameLongEn = "pushButtonLongEn";
@@ -98,6 +102,22 @@ void ButtonPage::buildUi() {
 	groupLayout->addWidget(labelSegButtonsHint_);
 	contentsLayout->addWidget(groupBoxButtons_);
 
+	// 复选按钮组分组：两端式（左端/右端）与三段式（左/中/右端），缝隙 2px
+	groupBoxCheckGroups_ = new QGroupBox(contents);
+	groupBoxCheckGroups_->setObjectName(QLatin1String(kNameGroupCheck));
+	auto* checkGroupLayout = new QVBoxLayout(groupBoxCheckGroups_);
+	checkGroupLayout->setSpacing(8);
+
+	checkGroupPair_ = new CarbonUIQCheckButtonGroup(2, groupBoxCheckGroups_);
+	checkGroupPair_->setGroupObjectName(QLatin1String(kNameCheckPair));
+	checkGroupLayout->addWidget(checkGroupPair_);
+
+	checkGroupTriple_ = new CarbonUIQCheckButtonGroup(3, groupBoxCheckGroups_);
+	checkGroupTriple_->setGroupObjectName(QLatin1String(kNameCheckTriple));
+	checkGroupLayout->addWidget(checkGroupTriple_);
+
+	contentsLayout->addWidget(groupBoxCheckGroups_);
+
 	// 长文本按钮分组：溢出观察样例
 	groupBoxButtonLong_ = new QGroupBox(contents);
 	groupBoxButtonLong_->setObjectName(QLatin1String(kNameGroupLong));
@@ -143,6 +163,21 @@ void ButtonPage::connectPageSignals() {
 	connect(pushButtonSegR_, &QPushButton::clicked, this, [this] {
 		emit statusMessage(langText("分段按钮[右段]被点击", "Segmented button [right] clicked"));
 	});
+
+	// 复选按钮组：各分段勾选/取消后向状态栏汇报（文案按当前语言取值）
+	const auto connectSegmentToggle = [this](QCheckBox* segment, const char* zh, const char* en) {
+		connect(segment, &QCheckBox::toggled, this, [this, zh, en](bool checked) {
+			emit statusMessage(QStringLiteral("%1%2").arg(
+			    langText(zh, en),
+			    langText(checked ? "被选中" : "被取消选中", checked ? " checked" : " unchecked")));
+		});
+	};
+	connectSegmentToggle(checkGroupPair_->segment(0), "两端按钮组[左端]", "Pair group [left]");
+	connectSegmentToggle(checkGroupPair_->segment(1), "两端按钮组[右端]", "Pair group [right]");
+	connectSegmentToggle(checkGroupTriple_->segment(0), "三段按钮组[左端]", "Triple group [left]");
+	connectSegmentToggle(checkGroupTriple_->segment(1), "三段按钮组[中端]",
+	                     "Triple group [middle]");
+	connectSegmentToggle(checkGroupTriple_->segment(2), "三段按钮组[右端]", "Triple group [right]");
 }
 
 /**
@@ -158,6 +193,14 @@ void ButtonPage::retranslatePage() {
 	    langText("分段按钮组：左圆 / 矩形 / 右圆，点击后在状态栏汇报。",
 		         "Segmented buttons: left-rounded / square / right-rounded; clicks are reported "
 		         "in the status bar."));
+	groupBoxCheckGroups_->setTitle(
+	    langText("复选按钮组（分段式复选框，缝隙 2px）",
+		         "Check button groups (segmented checkboxes, 2px gaps)"));
+	checkGroupPair_->segment(0)->setText(langText("左端", "Left"));
+	checkGroupPair_->segment(1)->setText(langText("右端", "Right"));
+	checkGroupTriple_->segment(0)->setText(langText("左端", "Left"));
+	checkGroupTriple_->segment(1)->setText(langText("中端", "Middle"));
+	checkGroupTriple_->segment(2)->setText(langText("右端", "Right"));
 	groupBoxButtonLong_->setTitle(
 	    langText("长文本按钮（观察是否溢出）", "Long-text buttons (observe overflow)"));
 	pushButtonLongCn_->setText(longTextZh());
